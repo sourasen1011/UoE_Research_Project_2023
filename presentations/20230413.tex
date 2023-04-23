@@ -94,13 +94,11 @@ The study aims to compare the performance of a Hybrid Deep Learning (HDL) archit
 Heart failure (HF) is a complex clinical syndrome that affects millions of individuals worldwide, particularly those with frailty, a common condition in older adults. Predictive models using machine learning (ML) based approaches have shown promise in identifying patients at high risk of adverse outcomes. In this project, we aim to develop and validate predictive models to identify HF patients with frailty who are at increased risk of mortality and hospitalization using EHR data. 
 
 \section{\label{rescon}Research Context}
-The framework of this research is based on previous work in predictive modeling for heart failure patients. Traditional survival analysis has been used extensively to predict mortality in this patient population. Machine learning methods have also been employed, including neural networks and decision trees. However, limited work has been done in predicting mortality and hospitalization in HF patients with frailty, especially using electronic health records (EHR) data.
-
+The framework of this research is based on previous work in predictive modeling for heart failure patients. Traditional survival analysis has been used extensively to predict mortality in this patient population. Machine learning methods have also been employed, including neural networks and decision trees (<ref?>). However, limited work has been done in predicting mortality and hospitalization in HF patients with frailty, especially using electronic health records (EHR) data.
 \subsubsection{\label{frail}Who is a `frail' patient?}
 Our target pool of patients being those suffering from frailty, one first needs to understand what the term `frail' refers to. Although its meaning may be nebulous to some extent, the eFI (Electronic Frailty Index) is a good clinical approximation of the condition. The eFI is based on the cumulative deficit model of frailty <doubt-1>, which proposes that frailty is the result of a build-up of health deficits or impairments. It is calculated using a set of clinical indicators, such as the presence of chronic conditions, cognitive impairment, and mobility problems, that are commonly documented in EHRs.
-
 \subsubsection{\label{hf}Investigating Heart Failure}
-HF can be influenced by lifestyle risk factors, such as diet, exercise, smoking, and alcohol consumption. Clinical factors such as diabetes, hypertension, BMI, cholesterol, and sugar consumption were also identified as potential risk factors for HF. Familial history may not be pertinent for all cases of HF, but may only be relevant for some cases.
+HF can be influenced by lifestyle risk factors, such as diet, exercise, smoking, and alcohol consumption. Clinical factors such as diabetes, hypertension, BMI, cholesterol, and sugar consumption were also identified as potential risk factors for HF. Familial history may not be pertinent for all cases of HF, but may only be relevant for some cases (<ref?>).
 
 Several past papers have addressed predictive modeling for heart failure patients. For instance, Xie et al. (2016) used traditional survival analysis to predict the risk of all-cause mortality and heart failure readmission in patients with HF. Another study by Wang et al. (2018) used machine learning techniques, including neural networks, to predict the risk of 30-day readmission in patients with HF. Meanwhile, Cho et al. (2020) proposed a decision tree-based model for predicting the risk of mortality in HF patients.\\
 
@@ -109,8 +107,15 @@ Recent studies have also explored the use of deep learning techniques for predic
 However, limited work has been done on predictive modeling for HF patients with frailty, particularly using hybrid deep learning and Hidden Markov Models. This project aims to bridge this gap in the literature.\\
 
 \section{\label{aimsobj}Aims \& Objectives}
-Clearly stated Research Questions:\\
-Objectives to answer them.
+
+\subsection{Research Questions:}
+\begin{enumerate}
+\item To what extent can HDL predict HF as time-to-event?
+\item How transparent/ interpretable can the HDL model be for prediction of HF?
+\item What are the trade-offs between HMM and HDL with respect to interpretability and performance?
+\end{enumerate}
+
+\subsection{Aims:}
 
 This project aims to develop an efficient and scalable predictive model for frail patients with heart failure, combining deep neural networks with statistical machine learning. The model will enable continuous risk prediction for hospitalization and mortality, addressing a critical need in patient care. The hybrid approach will provide stability and accuracy, enhancing the model's performance compared to traditional survival analysis or neural network models. The results of this project could improve patient outcomes by identifying those at high risk and facilitating targeted interventions. Our ML approach relies on hybrid deep learning, specifically an architecture that combines statistical learning in the lower unsupervised layers and convolutional neural networks on the top layer. Our secondary aim is to compare the hybrid deep learning models with a more mathematically transparent model, Hidden Markov Models (HMMs). We will also assess the trade-off between model performance and interpretability to determine the most suitable model for this task.
 
@@ -154,7 +159,9 @@ In the medical domain, model interpretability is crucial to ensure that the pred
 
 \section{\label{gov}Data Governance \& Ethics}
 Ethics approval is an essential requirement for this research project as it involves patient data. Patient data is considered sensitive information and approval ensures that this data is handled with care and confidentiality. For the purpose of this project, the medical school at the University of Exeter has consented to share CPRD Aurum data that they have procurred for their own research. Ethical approval is being sought from University of Exeter's management system, WorkTribe. As of writing this proposal however, this is still pending due to unforeseen technical glitches on the University website that is barring me from getting access to the platform. Access to the contingent data source, MIMIC-III is restricted and requires a formal application process to maintain data privacy and integrity. To comply with this, I have undergone the CITI training program for Data or Specimens Only Research.
-\\
+
+\section{\label{risk}Risk Assessment}
+
 \section{\label{plan}Project Plan}
 The project plan is outlined by the following chart.
 
@@ -176,18 +183,13 @@ The project plan is outlined by the following chart.
 \ganttlinkedbar{8. Submission}{13}{13}
 \label{fig:gantt}
 \end{ganttchart}
-\end{turn}
-
-\section{\label{risk}Risk Assessment}
-There is a chance of the requested CPRD data not coming through on time. As a contingency, I have gained access to the open-source data MIMIC-III, which requires a thorough training program to be completed.
+\end{turn}	
 
 \section{\label{c}Conclusion}
 
 %\nocite{*}
 
 %\bibliography{apssamp}% Produces the bibliography via BibTeX.
-\section{\label{app:ref}References}
-
 
 \nocite{*}
 
