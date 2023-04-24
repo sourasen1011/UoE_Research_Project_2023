@@ -22,7 +22,7 @@
  reprint,
  amsmath,amssymb,
  aps,
- nofootinbib
+ nofootinbib,
 ]{revtex4-2}
 
 \usepackage{graphicx}% Include figure files
@@ -32,17 +32,29 @@
 \usepackage[ruled,lined]{algorithm2e}
 \usepackage{svg}
 \usepackage{float}
-\usepackage{hyperref}
+\usepackage[hidelinks]{hyperref}
+\usepackage{color}
 \usepackage{enumitem}
-\usepackage{natbib} % Harvard style ref
-%\usepackage[square,sort,comma,numbers]{natbib}
+%Import the natbib package and sets a bibliography  and citation styles
+\usepackage{etoolbox}
+\usepackage{natbib}
+% make the references numbered
+\usepackage{hyperref,url}
+\newcounter{bibcount}
+\makeatletter
+\patchcmd{\@lbibitem}{\item[}{\item[\hfil\stepcounter{bibcount}{\thebibcount.}}{}{}
+\setlength{\bibhang}{2\parindent}
+\renewcommand\NAT@bibsetup%
+   [1]{\setlength{\leftmargin}{\bibhang}\setlength{\itemindent}{-\parindent}%
+       \setlength{\itemsep}{\bibsep}\setlength{\parsep}{\z@}}
+\makeatother
+\bibliographystyle{agsm}
+\setcitestyle{authoryear,open={(},close={)}} %Citation-related commands
 \usepackage{pgfgantt} % Gantt chart
 \usepackage{rotating}
 
-%\bibliographystyle{dcu}
-
 \hypersetup{
-    colorlinks=true,
+    colorlinks=false,
     linkcolor=blue,
     filecolor=magenta,      
     urlcolor=cyan,
@@ -87,24 +99,19 @@
 The study aims to compare the performance of a Hybrid Deep Learning (HDL) architecture for predicting mortality and hospitalization in heart failure patients with frailty, against traditional survival analysis techniques. HDL uses unsupervised and supervised layers to estimate prediction probabilities based on low dimensional and contextual/historic features from clinical data. By leveraging longitudinal patient data made available in the form of Electronic Health Records (EHR), a new perspective is sought on the performance of machine learning risk prediction models compared to conventional survival analysis in HF patients.
 \end{abstract}
 
-
 \maketitle
 
 \section{\label{intro}Introduction}
 Heart failure (HF) is a complex clinical syndrome that affects millions of individuals worldwide, particularly those with frailty, a common condition in older adults. Predictive models using machine learning (ML) based approaches have shown promise in identifying patients at high risk of adverse outcomes. In this project, we aim to develop and validate predictive models to identify HF patients with frailty who are at increased risk of mortality and hospitalization using EHR data. 
 
 \section{\label{rescon}Research Context}
-The framework of this research is based on previous work in predictive modeling for heart failure patients. Traditional survival analysis has been used extensively to predict mortality in this patient population. Machine learning methods have also been employed, including neural networks and decision trees (<ref?>). However, limited work has been done in predicting mortality and hospitalization in HF patients with frailty, especially using electronic health records (EHR) data.
+Traditional survival analysis has been used extensively to predict mortality in this patient population. Deep learning methods have also been employed in \citep{e2edlgjoreski}, \citep{nirschl2018deep}, \citep{10.1001/jamanetworkopen.2019.6972}, \citep{asolares2020} and \citep{lorenzoni_2019}. However, limited work has been done in predicting mortality and hospitalization in HF patients with frailty, especially using electronic health records (EHR) data.
 \subsubsection{\label{frail}Who is a `frail' patient?}
-Our target pool of patients being those suffering from frailty, one first needs to understand what the term `frail' refers to. Although its meaning may be nebulous to some extent, the eFI (Electronic Frailty Index) is a good clinical approximation of the condition. The eFI is based on the cumulative deficit model of frailty <doubt-1>, which proposes that frailty is the result of a build-up of health deficits or impairments. It is calculated using a set of clinical indicators, such as the presence of chronic conditions, cognitive impairment, and mobility problems, that are commonly documented in EHRs.
+Our target pool of patients being those suffering from frailty, one first needs to understand what the term `frail' refers to. Although its meaning may be nebulous to some extent, the eFI (Electronic Frailty Index) is a good clinical approximation of the condition. The eFI is based on the cumulative deficit model of frailty \citep{england_nhs_efi}, which proposes that frailty is the result of a build-up of health deficits or impairments. It is calculated using a set of clinical indicators, such as the presence of chronic conditions, cognitive impairment, and mobility problems, that are commonly documented in EHRs.
 \subsubsection{\label{hf}Investigating Heart Failure}
-HF can be influenced by lifestyle risk factors, such as diet, exercise, smoking, and alcohol consumption. Clinical factors such as diabetes, hypertension, BMI, cholesterol, and sugar consumption were also identified as potential risk factors for HF. Familial history may not be pertinent for all cases of HF, but may only be relevant for some cases (<ref?>).
-
-Several past papers have addressed predictive modeling for heart failure patients. For instance, Xie et al. (2016) used traditional survival analysis to predict the risk of all-cause mortality and heart failure readmission in patients with HF. Another study by Wang et al. (2018) used machine learning techniques, including neural networks, to predict the risk of 30-day readmission in patients with HF. Meanwhile, Cho et al. (2020) proposed a decision tree-based model for predicting the risk of mortality in HF patients.\\
-
-Recent studies have also explored the use of deep learning techniques for predicting outcomes in HF patients. For instance, Li et al. (2021) developed a deep learning model to predict the risk of all-cause mortality in patients with HF using EHR data. Many previous studies using machine learning for modeling the risk of HF in patients have focused primarily on aggregate or peak metrics - they have not considered incidences as time-to-event. Longitudinal data, which captures the entire cycle of a patient's diagnosis and treatment, is critical for accurate risk prediction. The use of electronic health records (EHR), such as those available in the Clinical Practice Research Datalink (CPRD), offers an opportunity to access comprehensive longitudinal data. This project will leverage CPRD's rich data source to address this research gap and develop a robust predictive model for hospitalization and mortality in frail heart failure patients.\\
-
-However, limited work has been done on predictive modeling for HF patients with frailty, particularly using hybrid deep learning and Hidden Markov Models. This project aims to bridge this gap in the literature.\\
+HF can be influenced by lifestyle risk factors, such as diet, exercise, smoking, and alcohol consumption. Clinical factors such as diabetes, hypertension, BMI, cholesterol, and sugar consumption were also identified as potential risk factors for HF. Familial history may not be pertinent for all cases of HF, but may only be relevant for some cases - familial dilated cardiomyopathy (DCM) is a type of heart failure that can have a strong genetic component \citep{peters2020familial}.
+\subsubsection{\label{pastwork}Past Work}
+Several past papers have addressed predictive modeling for heart failure patients. \citep{che2017} proposes a deep neural network model with learned medical feature embedding to address high dimensionality and temporality in electronic health record (EHR) data. They use a convolutional neural network to capture non-linear longitudinal evolution of EHRs and local temporal dependency for risk prediction, and embed medical features to account for high dimensionality. Experiments show promising results in predicting risks for congestive heart failure. \citep{suo2017personalized} focuses on personalized predictive modeling and aims to build specific models for individual patients using similar patient cohorts to capture their specific characteristics. According to this study, although CNNs have shown promise on measuring patient similarity, one disadvantage is that they could not utilize temporal and contextual information of EHRs. To measure patient similarity using EHRs, a time-fusion CNN framework was proposed. Within this framework, the vector representation was generated for each patient, which was then utilized for measuring patient similarity and personalized disease prediction. Dynamic updates to a CNN model are explored in \citep{brand2018real} as more data is gathered over time - this architecture lends itself well to real-time mortality risk prediction. Maintaining interpretability across deep learning models is explored in \citep{caicedo2019iseeu}. Many previous studies using machine learning for modeling the risk of HF in patients have focused on discretized outputs. This study aims to consider incidences as time-to-event. The use of EHR such as those available in CPRD, offers an opportunity to access comprehensive longitudinal data, which captures the entire cycle of a patient's diagnosis and treatment. Limited work has been done on predictive modeling for HF patients with frailty, particularly using hybrid deep learning and Hidden Markov Models. This project aims to bridge this gap in the literature.
 
 \section{\label{aimsobj}Aims \& Objectives}
 
@@ -117,7 +124,7 @@ However, limited work has been done on predictive modeling for HF patients with 
 
 \subsection{Aims:}
 
-This project aims to develop an efficient and scalable predictive model for frail patients with heart failure, combining deep neural networks with statistical machine learning. The model will enable continuous risk prediction for hospitalization and mortality, addressing a critical need in patient care. The hybrid approach will provide stability and accuracy, enhancing the model's performance compared to traditional survival analysis or neural network models. The results of this project could improve patient outcomes by identifying those at high risk and facilitating targeted interventions. Our ML approach relies on hybrid deep learning, specifically an architecture that combines statistical learning in the lower unsupervised layers and convolutional neural networks on the top layer. Our secondary aim is to compare the hybrid deep learning models with a more mathematically transparent model, Hidden Markov Models (HMMs). We will also assess the trade-off between model performance and interpretability to determine the most suitable model for this task.
+This project aims to develop a scalable predictive model for frail patients with heart failure, combining deep neural networks with statistical machine learning. The model can enable continuous risk prediction for hospitalization and mortality, addressing a critical need in patient care. The results of this project could improve patient outcomes by identifying those at high risk and facilitating targeted interventions. The ML approach relies on hybrid deep learning, specifically an architecture that combines statistical learning in the lower unsupervised layers and convolutional neural networks on the top layer. A secondary aim is to compare the hybrid deep learning models with a more mathematically transparent model, Hidden Markov Models (HMMs). If time permits, I will also assess the trade-off between model performance and interpretability to determine the most suitable model for this task.
 
 \section{\label{datares}Data \& Resources}
 CPRD (Clinical Research Practice Datalink) data is likely to be used for this project. From a collaboration with the medical school at the University of Exeter, I am being granted access to a set of data contaning EHR records of a vast number of patients, consisting of both HF patients and non-HF patients.
@@ -127,7 +134,7 @@ CPRD (Clinical Research Practice Datalink) data is likely to be used for this pr
 \subsubsection{\label{cprd} Primary Data Source: CPRD Aurum}
 The Clinical Practice Research Datalink (CPRD) is a large, longitudinal UK primary care database containing anonymized electronic health records. It includes information on patient demographics, diagnoses, symptoms, prescriptions, and referrals, among other clinical data. The database is widely used for observational research, including epidemiological studies, drug safety monitoring, and healthcare utilization analysis. CPRD is maintained by the Medicines and Healthcare products Regulatory Agency (MHRA) and is available to researchers and industry partners who meet certain criteria and obtain appropriate approvals.\\
 
-The Clinical Practice Research Datalink (CPRD) Aurum is a database provided by EMIS Health. It includes data for approximately 7 million active patients, and covers consenting practices in England, with consenting practices from Northern Ireland available from 2019. CPRD Aurum is updated monthly, and it is representative of the broader English population in terms of geographical spread, deprivation, age, and gender. However, it does not record data outside of primary care. It is important to be aware of this limitation. To bypass it, the CPRD Aurum database can be linked to datasets such as Hospital Episode Statistics (HES), Death Registration, Cancer data, Mental Health Services Dataset, and Small Area-Level Data.
+The Clinical Practice Research Datalink (CPRD) Aurum is a database provided by EMIS Health. It includes data for approximately 7 million active patients, and covers consenting practices in England, with consenting practices from Northern Ireland available from 2019. CPRD Aurum is updated monthly, and it is representative of the broader English population in terms of geographical spread, age, and gender. However, it does not natively record data outside of primary care. It is important to be aware of this limitation. To bypass it, the CPRD Aurum database can be linked to datasets such as Hospital Episode Statistics (HES), Death Registration, Cancer data, Mental Health Services Dataset, and Small Area-Level Data.
 
 \subsubsection{\label{mimiciii} Contingent Data Source: MIMIC-III}
 
@@ -135,32 +142,35 @@ The MIMIC-III (Medical Information Mart for Intensive Care III) dataset is a lar
 
 The MIMIC-III dataset has been widely used for research in various fields, such as machine learning, clinical decision support, and epidemiology. It is particularly useful for the development and testing of predictive models and algorithms, as well as for investigating clinical phenomena and interventions. The dataset has contributed to numerous studies, and many of its findings have led to improved patient care and clinical decision-making.\\
 
-The database has been made publicly available to researchers around the world, but access is restricted and requires a formal application process. This is to ensure the privacy and security of patient data, as well as to maintain the integrity of the dataset. Researchers who wish to use the dataset must complete a certification course on data privacy and ethics before gaining access.\\
-
-In summary, the MIMIC-III dataset is a large, diverse ICU database that has been widely used for research in various fields. It has contributed to numerous studies and has led to improved patient care and clinical decision-making.
+The database has been made publicly available to researchers around the world, but access is restricted and requires a formal application process. This is to ensure the privacy and security of patient data, as well as to maintain the integrity of the dataset. Researchers who wish to use the dataset must complete a certification course on data privacy and ethics before gaining access.
 
 \subsection{\label{coding}Coding}
 
-There are several possible tools of choice for the project. The ones I plan to use are Python for coding the base unsupervised layers and upper supervised layers as well as encoding contextual and historical data. This is because it has many useful libraries and frameworks at its disposal for numerical computing and neural networks, namely numpy, scipy, Pytorch and Tensorflow. For the more statistically inclined approach of Hidden Markov Models, I plan to use R as it has native functionalities for building Markov chains as well as pacakges like \texttt{brms} and \texttt{rstan} for Bayesian simulation methods like Markov Chain Monte Carlo.
+There are several possible tools of choice for the project. The ones I plan to use are Python for exploratory analysis, coding the base unsupervised layers and upper supervised layers as well as encoding contextual and historical data. This is because it has many useful libraries and frameworks at its disposal for numerical computing and neural networks, namely numpy, scipy, Pytorch and Tensorflow. For the more statistically inclined approach of Hidden Markov Models, I plan to use R as it has native functionalities for building Markov chains as well as pacakges like \texttt{brms} and \texttt{rstan} for Bayesian simulation methods like Markov Chain Monte Carlo.
 
 \section{\label{methods}Methods \& Experiment Design}
 
 \subsection{\label{build}Model Building}
-To evaluate the performance of the hybrid deep learning models and Hidden Markov Models developed in this project, we will compare them to traditional survival analysis models such as Cox proportional hazards and Kaplan-Meier curves. These models are widely used in predicting outcomes in heart failure patients, providing a benchmark for our ML-based models. We will assess the performance of our models based on metrics such as accuracy, sensitivity, and specificity. The comparison will allow us to determine whether the ML-based models outperform traditional models, providing insights into the potential of these models for predicting outcomes in frail heart failure patients.
+To evaluate the performance of the hybrid deep learning models and Hidden Markov Models developed in this project, I will compare them to traditional survival analysis models such as Cox proportional hazards and Kaplan-Meier curves. These models are widely used in predicting outcomes in heart failure patients, providing a benchmark for ML-based models. I will assess the performance of our models based on metrics such as accuracy, sensitivity, and specificity. The comparison will allow us to determine whether the ML-based models outperform traditional models, providing insights into the potential of these models for predicting outcomes in frail heart failure patients.
 \subsubsection{\label{prim}Primary Aim: CNN}
-The idea is to parse through time-series data of individual patient histories and identify signals that can discriminate between HF and non-HF patients. These signals can then be encoded from their high-dimensional space into a latent vector representation in lower dimensions - possible techniques for dimensionality reduction such as Principal Component Analysis (PCA) and Linear Discriminant Analysis (LDA) may be used for this purpose. These latent representations can then be fed into supervised layers of a Convolutional Neural Network <ref?>. The output from the network should be an array depicting the persistency of a patient till an even of interest - in our case, time-to-hospitalization or time-to-death. 
-Separate hold-out sets can be reserved for testing purposes. This will be more favourable against a discretized or aggregate output as it will allow more direct comparison with traditional survival analysis like multivariate Cox regression <ref?>.
+The idea is to parse through time-series data of individual patient histories and identify signals that can discriminate betweenpotential  HF and non-HF patients. These signals can then be encoded from their high-dimensional space into a latent vector representation in lower dimensions - possible techniques for dimensionality reduction such as Principal Component Analysis (PCA) and Linear Discriminant Analysis (LDA) may be used for this purpose. These latent representations can then be fed into supervised layers of a Convolutional Neural Network. The output from the network should be an array depicting the persistency of a patient till an even of interest - in our case, time-to-hospitalization or time-to-death. Separate hold-out sets can be reserved for testing purposes. This will be more favourable against a discretized or aggregate output as it will allow more direct comparison with traditional survival analysis like multivariate Cox regression \citep{lin1994cox}.
 \subsubsection{\label{sec}Secondary Aim: HMM}
-The secondary aim would be to use either the multivariate time series of observed biosignals or their latent vector representation $\{o_{1,\cdots,T}\}$ as observed states in a Hidden Markov Model $\lambda = (A,B,\pi)$ \footnote{$A$ and $B$ are respectively the state transition matrix and the observation (emission) matrix}. Algorithms for likelihood estimation (Forward Algorithm <ref?>), decoding (Viterbi Algorithm <ref?>) and learning (Baum-Welch <ref?>) will be used to derive ideal parameters for the model and then extract most probable sequence of hidden states given the observations. The hidden states here can correspond to either a binary set $S = \{1 , 2\}$ corresponding to alive and deceased with their individual probabilities at time $t$ allowing us to understand the onset of HF and how it may change over a sequence of observed events.
+The secondary aim would be to use either the multivariate time series of observed biosignals or their latent vector representation $\{o_{1,\cdots,T}\}$ as observed states in a Hidden Markov Model $\lambda = (A,B,\pi)$ \footnote{$A$ and $B$ are respectively the state transition matrix and the observation (emission) matrix}. Algorithms for likelihood estimation (Forward Algorithm), decoding (Viterbi Algorithm) and learning (Baum-Welch) will be used to derive ideal parameters for the model and then extract most probable sequence of hidden states given the observations \citep{keselj2009speech}. The hidden states here can correspond to either a binary set $S = \{1 , 2\}$ corresponding to \texttt{alive} and \texttt{deceased} with their individual probabilities at time $t$ allowing us to understand the onset of HF and how it may change over a sequence of observed events.
 
 
 \subsection{\label{expla}Explainability \& Interpretability}
-In the medical domain, model interpretability is crucial to ensure that the predictions made by the model can be trusted and applied in a clinical setting. Although ML-based models may provide higher accuracy, their black-box nature can make them less interpretable, and therefore cast reasonable doubt on their applicability. Therefore, it is important to assess the trade-off between model performance and model interpretability. One approach to assessing this trade-off is to use model-agnostic methods such as Local Interpretable Model-Agnostic Explanations (LIME) and SHapley Additive exPlanations (SHAP), which provide insights into how the model arrived at its prediction. We will use these methods to explain the predictions made by our models and compare the level of interpretability with traditional survival analysis models. We will also assess the performance of the models against the level of interpretability, enabling us to evaluate the trade-off between model performance and interpretability. The results will provide guidance on the most suitable model for predicting outcomes in frail heart failure patients in a clinical setting.
+In the medical domain, model interpretability is crucial to ensure that the predictions made by the model can be trusted and applied in a clinical setting. Although ML-based models may provide higher accuracy, their black-box nature can make them less interpretable, and therefore cast reasonable doubt on their applicability. Therefore, it is important to assess the trade-off between model performance and model interpretability. One approach to assessing this trade-off is to use model-agnostic methods such as Local Interpretable Model-Agnostic Explanations (LIME) and SHapley Additive exPlanations (SHAP), which provide insights into how the model arrived at its prediction. I plan to use these methods to explain the predictions made by the models and compare the level of interpretability with traditional survival analysis models. I can also assess the performance of the models against the level of interpretability, enabling me to evaluate the trade-off between model performance and interpretability. The results will provide guidance on the most suitable model for predicting outcomes in frail heart failure patients in a clinical setting.
 
 \section{\label{gov}Data Governance \& Ethics}
-Ethics approval is an essential requirement for this research project as it involves patient data. Patient data is considered sensitive information and approval ensures that this data is handled with care and confidentiality. For the purpose of this project, the medical school at the University of Exeter has consented to share CPRD Aurum data that they have procurred for their own research. Ethical approval is being sought from University of Exeter's management system, WorkTribe. As of writing this proposal however, this is still pending due to unforeseen technical glitches on the University website that is barring me from getting access to the platform. Access to the contingent data source, MIMIC-III is restricted and requires a formal application process to maintain data privacy and integrity. To comply with this, I have undergone the CITI training program for Data or Specimens Only Research.
+Ethics approval is an essential requirement for this research project as it involves patient data. Patient data is considered sensitive information and approval ensures that this data is handled with care and confidentiality. For the purpose of this project, the medical school at the University of Exeter has consented to share CPRD Aurum data that they have procurred for their own research. Ethical approval is being sought from University of Exeter's management system, WorkTribe. Access to the contingent data source, MIMIC-III is restricted and requires a formal application process to maintain data privacy and integrity. To comply with this, I have undergone the CITI training program for Data or Specimens Only Research.
 
 \section{\label{risk}Risk Assessment}
+There are a few potential risks to consider before embarking on this project. Some mitigation strategies have already been put into place.
+
+\begin{enumerate}
+\item Because of the sensitivity of the CPRD data, it involves some degree of navigating through bureaucratic processes of data access and retrieval. There is a chance that the data does not become available within a favourable time period. To mitigate this, access to the open-source dataset MIMIC-III has already been secured.
+\item As stated earlier, this work deals with patient data (albeit anonymized) and hence, ethics approval is necessary. As of writing this proposal however, this is still pending due to unforeseen technical glitches on the University website that is barring me from getting access to the platform. However, talks are ongoing with the University IT department so that this may be resolved at the earliest.
+\end{enumerate}
 
 \section{\label{plan}Project Plan}
 The project plan is outlined by the following chart.
@@ -186,14 +196,14 @@ The project plan is outlined by the following chart.
 \end{turn}	
 
 \section{\label{c}Conclusion}
-
+This project will leverage CPRD's rich data source to develop a robust predictive model for hospitalization and mortality in frail heart failure patients, with the ultimate goal of assessing the trade-off between performance and interpretability arising from the two different paradigms of HDL and HMM.
 %\nocite{*}
 
 %\bibliography{apssamp}% Produces the bibliography via BibTeX.
 
-\nocite{*}
+\cite{*}
 
-\bibliographystyle{agsm}
+\bibliographystyle{apalike}
 \bibliography{20230413}% Produces the bibliography via BibTeX.
 
 \end{document}
