@@ -25,19 +25,24 @@ class Transforms:
         print(f'number of patients: {len(self.data)}')
         self.dur_col = dur_col
 
-        bin_edges = np.linspace(self.data[dur_col].min() , self.data[dur_col].max() , cuts)
+        bin_edges = np.linspace(self.data[dur_col].min()+1 , self.data[dur_col].max()-1 , cuts) # the -/+1 is there so that we can automatically get 0s and maxes
         self.bin_edges = bin_edges
 
         # Perform bucketing
         bucket_indices = np.digitize(self.data[dur_col], bin_edges)
-        bucket_indices = bucket_indices - 1 # broadcast subtract 1 to maintain starting from zero
+        bucket_indices = bucket_indices
+
+        # broadcast subtract 1 to maintain starting from zero <--- deprecated comment
 
         # Marker
         self.bin_dur = True
         self.bucket_indices = bucket_indices #maintain the bucket indices object as an attribute of the class
         self.n_bucket_indices = len(np.unique(self.bucket_indices)) #maintain number of buckets
 
-        return (self.data[subject_col] , self.bucket_indices)
+        # returns
+        pats , dur_idx = self.data[subject_col] , self.bucket_indices
+        return np.stack([np.array(pats) , np.array(dur_idx)] , axis = 1)
+        
     
     # def modify_data(self , durations , events , cuts):
     #     '''
