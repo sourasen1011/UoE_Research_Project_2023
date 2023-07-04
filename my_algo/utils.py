@@ -6,12 +6,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import numba
+from scipy import interpolate
+from datetime import timedelta
 
 from pycox.evaluation.concordance import concordance_td
 
-from losses import nll_logistic_hazard
-from model import MLP
-from transforms import Transforms
+from my_algo.losses import nll_logistic_hazard
+from my_algo.model import MLP
+from my_algo.transforms import Transforms
 
 # For preprocessing
 from sklearn.preprocessing import StandardScaler
