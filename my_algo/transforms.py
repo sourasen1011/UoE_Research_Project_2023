@@ -15,9 +15,11 @@ class Transforms:
         simple function to discretize durations into buckets
         '''
         bin_edges = np.linspace(durations.min() , durations.max() , cuts)
+        self.bin_edges = bin_edges
 
         # Perform bucketing
         bucket_indices = np.digitize(durations, bin_edges)
+        bucket_indices = bucket_indices - 1 # broadcast subtract 1 to maintain starting from zero
 
         # Marker
         self.bin_dur = True
@@ -34,7 +36,8 @@ class Transforms:
         bucket_indices = self.bin_duration(durations = data_mod[dur_col] , cuts = cuts)
         data_mod[dur_col] = bucket_indices
         self.bucket_indices = bucket_indices #maintain the bucket indices object as an attribute of the class
+        self.n_bucket_indices = len(np.unique(self.bucket_indices)) #maintain number of buckets
         
-        return data_mod.drop([dur_col , eve_col] , axis = 1) , data_mod[[dur_col , eve_col]].to_numpy()
+        return data_mod.drop([dur_col , eve_col] , axis = 1) , data_mod[[dur_col , eve_col]].to_numpy().T # transpose is necessary
 
 

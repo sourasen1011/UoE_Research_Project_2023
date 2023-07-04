@@ -1,8 +1,35 @@
+import torch
+import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import numba
+
 from pycox.evaluation.concordance import concordance_td
+
+from losses import nll_logistic_hazard
+from model import MLP
+from transforms import Transforms
+
+# For preprocessing
+from sklearn.preprocessing import StandardScaler
+from sklearn_pandas import DataFrameMapper 
+import torch # For building the networks 
+import torchtuples as tt # Some useful functions
+
+from pycox.datasets import metabric
+from pycox.models import LogisticHazard
+# from pycox.models import PMF
+# from pycox.models import DeepHitSingle
+from pycox.evaluation import EvalSurv
+
+# We also set some seeds to make this reproducable.
+# Note that on gpu, there is still some randomness.
+np.random.seed(1234)
+_ = torch.manual_seed(123)
+
 
 class MyDataset(Dataset):
     '''
@@ -28,7 +55,7 @@ class Eval:
     
     Time dependent concorance index from
     Antolini, L.; Boracchi, P.; and Biganzoli, E. 2005. A timedependent discrimination
-    index for survival data. Statistics in Medicine 24:3927–3944.
+    index for survival data. Statistics in Medicine 24:3927-3944.
     
     Implementation by 
     Håvard Kvamme and Ørnulf Borgan. Continuous and Discrete-Time Survival Prediction

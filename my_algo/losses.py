@@ -24,7 +24,7 @@ def nll_logistic_hazard(phi: Tensor, idx_durations: Tensor, events: Tensor, redu
         with Neural Networks. arXiv preprint arXiv:1910.06724, 2019.
         https://arxiv.org/pdf/1910.06724.pdf
     """
-    if phi.shape[1] <= idx_durations.max():
+    if phi.shape[1] <= idx_durations.max(): # Kvamme et al uses lesser than equal to
         raise ValueError(f"Network output `phi` is too small for `idx_durations`."+
                         f" Need at least `phi.shape[1] = {idx_durations.max().item()+1}`,"+
                         f" but got `phi.shape[1] = {phi.shape[1]}`")
