@@ -13,7 +13,7 @@ class Transforms:
         self.bucket_indices = None
         self.n_bucket_indices = None
     
-    def bin_duration(self , data , subject_col , dur_col , cuts):
+    def bin_duration(self , data , subject_col , dur_col , eve_col , cuts):
         '''
         Simple function to discretize durations into buckets
         Params -
@@ -21,9 +21,10 @@ class Transforms:
         cuts: int: specifies the number of divisions between minimum and maximum duration of cohort 
         '''
         # data attributes
-        self.data = data[[subject_col , dur_col]].drop_duplicates()
+        self.data = data[[subject_col , dur_col , eve_col]].drop_duplicates()
         print(f'number of patients: {len(self.data)}')
-        self.dur_col = dur_col
+        # self.dur_col = dur_col
+        # self.eve_col = eve_col
 
         bin_edges = np.linspace(self.data[dur_col].min()+1 , self.data[dur_col].max()-1 , cuts) # the -/+1 is there so that we can automatically get 0s and maxes
         self.bin_edges = bin_edges
@@ -40,8 +41,8 @@ class Transforms:
         self.n_bucket_indices = len(np.unique(self.bucket_indices)) #maintain number of buckets
 
         # returns
-        pats , dur_idx = self.data[subject_col] , self.bucket_indices
-        return np.stack([np.array(pats) , np.array(dur_idx)] , axis = 1)
+        pats , dur_idx , events = self.data[subject_col] , self.bucket_indices , self.data[eve_col]
+        return np.stack([np.array(pats) , np.array(dur_idx) , np.array(events)] , axis = 1)
         
     
     # def modify_data(self , durations , events , cuts):

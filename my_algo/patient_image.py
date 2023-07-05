@@ -15,9 +15,11 @@ class Patient_Image_Builder():
         self.data = self.data.sort_values([self.subject_col , self.obs_time]) # sort to maintain order
         self.cov_cols = cov_cols
 
-    def build_img(self):
+    def build_img(self , verbose = False):
         '''
         Function to build patient image at given resolution
+        Params:
+        verbose: Dictates the frequency of print output
         '''
         patient_image = [] # container to hold all patient images
         counter = 0 #vestigial. can remove
@@ -39,7 +41,7 @@ class Patient_Image_Builder():
             _data['cum_time_diff'] = _data['time_diff'].cumsum()
             
             # select necessary covariates
-            _data = _data[self.cov_cols]
+            _data = _data[self.cov_cols+['cum_time_diff']]
 
             # Backfill for covariates with NaN (but at least 1 non-NaN) - not clever but gets the job done
             _data = _data.bfill()
@@ -66,8 +68,7 @@ class Patient_Image_Builder():
             patient_image.append(_resolved_data)
             
             counter += 1
-            if counter%1000 == 0: print(f'{counter} patients done')
-            # if counter>2000: break
+            if verbose & (counter%1000 == 0): print(f'{counter} patients done')
 
         patient_image = np.stack(patient_image , axis = 0)
 
