@@ -22,18 +22,16 @@ class Transforms:
         '''
         # data attributes
         self.data = data[[subject_col , dur_col , eve_col]].drop_duplicates()
-        print(f'number of patients: {len(self.data)}')
+        # print(f'number of patients: {len(self.data)}')
         # self.dur_col = dur_col
         # self.eve_col = eve_col
 
-        bin_edges = np.linspace(self.data[dur_col].min()+1 , self.data[dur_col].max()-1 , cuts) # the -/+1 is there so that we can automatically get 0s and maxes
+        bin_edges = np.floor(np.linspace(0 , self.data[dur_col].max() , cuts))
         self.bin_edges = bin_edges
 
         # Perform bucketing
-        bucket_indices = np.digitize(self.data[dur_col], bin_edges)
-        bucket_indices = bucket_indices
-
-        # broadcast subtract 1 to maintain starting from zero <--- deprecated comment
+        bucket_indices = np.digitize(self.data[dur_col], bin_edges , right = False) # the right=bool part maintains consistency with pycox
+        bucket_indices = bucket_indices - 1 # broadcast subtract 1 to maintain starting from zero
 
         # Marker
         self.bin_dur = True
@@ -41,8 +39,8 @@ class Transforms:
         self.n_bucket_indices = len(np.unique(self.bucket_indices)) #maintain number of buckets
 
         # returns
-        pats , dur_idx , events = self.data[subject_col] , self.bucket_indices , self.data[eve_col]
-        return np.stack([np.array(pats) , np.array(dur_idx) , np.array(events)] , axis = 1)
+        pats , dur , dur_idx , events = self.data[subject_col] , self.data[dur_col] , self.bucket_indices , self.data[eve_col]
+        return np.stack([np.array(pats) , np.array(dur) , np.array(dur_idx) , np.array(events)] , axis = 1)
         
     
     # def modify_data(self , durations , events , cuts):

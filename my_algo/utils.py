@@ -9,8 +9,8 @@ import numba
 from scipy import interpolate
 from datetime import timedelta
 
-from pycox.evaluation.concordance import concordance_td
-
+# from pycox.evaluation.concordance import concordance_td
+# 
 from my_algo.losses import nll_logistic_hazard
 from my_algo.model import MLP
 from my_algo.transforms import Transforms
@@ -21,11 +21,11 @@ from sklearn_pandas import DataFrameMapper
 import torch # For building the networks 
 import torchtuples as tt # Some useful functions
 
-from pycox.datasets import metabric
-from pycox.models import LogisticHazard
+# from pycox.datasets import metabric
+# from pycox.models import LogisticHazard
 # from pycox.models import PMF
 # from pycox.models import DeepHitSingle
-from pycox.evaluation import EvalSurv
+# from pycox.evaluation import EvalSurv
 
 # We also set some seeds to make this reproducable.
 # Note that on gpu, there is still some randomness.
@@ -41,6 +41,7 @@ class MyDataset(Dataset):
         self.data = data
         self.durations = durations
         self.events = events
+        assert self.data.shape[0] == self.durations.shape[0] == self.durations.shape[0] , 'shapes must match!'
 
     def __len__(self):
         return len(self.data)
