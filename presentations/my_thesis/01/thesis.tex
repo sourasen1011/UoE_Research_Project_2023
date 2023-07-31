@@ -1,0 +1,111 @@
+% ****** Start of file apssamp.tex ******
+%
+%   This file is part of the APS files in the REVTeX 4.2 distribution.
+%   Version 4.2a of REVTeX, December 2014
+%
+%   Copyright (c) 2014 The American Physical Society.
+%
+%   See the REVTeX 4 README file for restrictions and more information.
+%
+% TeX'ing this file requires that you have AMS-LaTeX 2.0 installed
+% as well as the rest of the prerequisites for REVTeX 4.2
+%
+% See the REVTeX 4 README file
+% It also requires running BibTeX. The commands are as follows:
+%
+%  1)  latex apssamp.tex
+%  2)  bibtex apssamp
+%  3)  latex apssamp.tex
+%  4)  latex apssamp.tex
+%
+\documentclass[%
+ reprint,
+ amsmath,amssymb,
+ aps,
+]{revtex4-2}
+
+\usepackage{graphicx}% Include figure files
+\usepackage{dcolumn}% Align table columns on decimal point
+\usepackage{bm}% bold math
+\usepackage{amsthm}%theorems and stuff
+\usepackage[ruled,lined]{algorithm2e}
+\usepackage{svg}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\hypersetup{
+    pdftitle={uoe23thesis},
+    pdfpagemode=FullScreen,
+    }
+\setlength\parindent{0pt} % zero indent
+
+\begin{document}
+
+\preprint{APS/123-QED}
+
+
+\title{Survival Analysis of Heart Failure Patients}% Force line breaks with \\
+%\thanks{A footnote to the article title}%
+\author{Souradeep Sen \\
+	 \small Department of Computer Science, \\ 
+	 \small University of Exeter
+	}
+
+\date{July, 2023}% It is always \today, today,
+             %  but any date may be explicitly specified
+
+\begin{abstract}
+The study aims to compare the performance of Deep Learning (DL) architectures for predicting mortality and hospitalization in heart failure (HF) patients, against traditional survival analysis techniques. The aim is to see if combining unsupervised and supervised learning can help estimate survival probabilities based on contextual and historic features from clinical data, and how these predictions fare against traditional techniques. By leveraging longitudinal patient data made available in the form of Electronic Health Records (EHR), a new perspective is sought on the performance of machine learning risk prediction models compared to conventional survival analysis in HF patients.
+\end{abstract}
+
+\maketitle
+
+\section{\label{intro}Introduction}
+Heart failure is a clinical syndrome interfering with the heart's ability to pump blood, leading to a reduced ability to perform systemic circulation. This condition is widespread globally - approximately 26 million people worldwide are estimated to be affected by heart failure \cite{Savarese_Lund_2017}. Hence, accurately predicting risk is crucial for improving patient outcomes. Traditional survival analysis can be limited in its ability to handle complex non-linear dependencies as well as accounting for time-variant patient characteristics <this is not really true>. Deep Learning is an exciting tool in this aspect due to its innate ability to handle complex non-linear relationships <include citation - NNs are universal function approximators>. While there has been work done on adapting deep learning to the survival analysis domain (see: ), it is still a growing field. As DL is generally labeled as data-hungry <include citation>, the advent of EHR data with its vast longitudinal bandwidth(??) looks promising to be used in conjunction with DL. This study will attempt to validate the hypothesis that HDL outperforms traditional survival analysis in terms of prediction accuracy using real-world EHR data. The findings may have important implications for clinical practice, healthcare resource allocation, and future research in risk prediction modeling for HF patients with frailty.
+
+The paper is organized as follows. Section 2 contains a brief review of related work in this capacity. Section 3 presents a more rigorous understanding of survival analysis, before building up to how discrete hazard rates <cite Gennsheimer \& Narasimhan> (as used in this paper) can be parameterized by a neural network \cite{kvamme_continuous_2019}. A suitable loss function is chosen from the available literature and is derived as per \cite{kvamme_continuous_2019}. Some of the neural network architectures used in this paper (MLP, CNN, PCA) are briefly touched upon although their more rigorous descriptions are beyond the direct scope of the paper - hence they are detailed in the Appendices. Section 4 delves into Uncertainty Quantification, by way of Monte Carlo (MC) dropout and looks at explainability of the model(s) built. Section 5 discusses the data used for the paper - MIMIC-IV. Section 6 looks at the results by means of experiments over real and synthetic data and compares the architechture to existing solutions from deep learning and traditional survival analysis. Section 7 is reserved for proposed extensions to the model and further work that could be done.
+
+\section{\label{rescon}Related Work}
+Traditional survival analysis has been used extensively to predict mortality in this patient population. Deep learning methods have also been employed - see \cite{e2edlgjoreski}, \cite{nirschl2018deep}, \cite{10.1001/jamanetworkopen.2019.6972}, \cite{asolares2020} and \cite{lorenzoni_2019}. However, limited work has been done in predicting mortality and hospitalization in HF patients with frailty, especially using electronic health records (EHR) data. Several past papers have addressed predictive modeling for heart failure patients. A deep neural network model with learned medical feature embedding is proposed in \cite{che2017} to address high dimensionality and temporality in electronic health record (EHR) data. Here, a convolutional neural network is used to capture non-linear longitudinal evolution of EHRs and local temporal dependency for risk prediction, and embed medical features to account for high dimensionality. Experiments show promising results in predicting risks for congestive heart failure.\\
+
+Personalized predictive modeling is investigated in \cite{suo2017personalized}, which aims to build specific models for individual patients using similar patient cohorts to capture their specific characteristics. According to this study, although CNNs have shown promise on measuring patient similarity, one disadvantage is that they could not utilize temporal and contextual information of EHRs. To measure patient similarity using EHRs, the authors proposed a time-fusion CNN framework. A vector representation was generated for each patient, which was then utilized for measuring patient similarity and personalized disease prediction. Dynamic updates to a CNN model are explored in \cite{brand2018real} as more data is gathered over time - this architecture lends itself well to real-time mortality risk prediction.\\
+
+Maintaining interpretability across deep learning models is explored in \cite{caicedo2019iseeu}. Many previous studies using machine learning for modeling the risk of HF in patients have focused on discretized outputs. This study aims to consider incidences as time-to-event to enable continuous probabilistic risk prediction for hospitalization and mortality, addressing a critical need in patient care. The use of EHR such as those available in CPRD, allows access to comprehensive longitudinal data, which captures the entire cycle of a patient's diagnosis and treatment. <Add citations  for PyCox, Deep Survival Machines, Deep Survival Analysis, Faraggi-Simon, DeepSurv, RNN-SURV, >
+
+\section{\label{surv}Survival Analysis: Basics}
+Survival analysis deals with the estimation of a survival distribution representing the probability of an event of interest, typically a failure, to occur beyond a certain time in the future \cite{nagpal_deep_2021}. One way to specify the survival distribution is through the survival function. The survival function defines the probability of surviving till point t \cite{Moore_2016}.
+\[
+S(t) = P(T>t), \ 0 < t <  \infty
+\]
+It can be thought of as the complement of the cumulative distribution function $F(t)$.
+\[
+S(t) = P(T>t) = 1 - P(T\le t) = 1 - F(t), \ 0 < t <  \infty
+\]
+Another way to specify the survival distribution is through the hazard function, which denotes the instantaneous rate of failure.
+\[
+h(t) = \lim_{\delta\to0}\frac{P(t<T<t+\delta|T>t}{\delta}
+\]
+For the continuous-time scenario, the hazard function and survival function are related as follows. 
+\begin{gather}
+f(t) = \frac{d}{dt}F(t) = -\frac{d}{dt}S(t)\\
+h(t) = \frac{f(t)}{S(t)} 
+\end{gather}
+where $f(t)$ is the probability mass function (PMF). This says that the hazard is the probability of the subject experiencing an event at time t, provided that the subject is alive till time t. It can be further simplified as
+\begin{gather}
+h(t) = -\frac{d}{dt}S(t)\frac{1}{S(t)}\\
+\implies S(t) = exp\left (- \int_{0}^{t}h(u)du\right)
+\end{gather}
+This relationship produces the survival function from a hazard function \cite{Moore_2016}.\\
+
+Before moving to the discrete setting, some formal notation for the data is introduced. The data is assumed to be right-censored. Hence, the data, $\mathcal{D}$ can be represented as a set of tuples $\{(x_i , t_i , \delta_i)\}_{i=1}^{N}$  \cite{nagpal_deep_2021}. Here, $x_i \in \mathbb{R}^d$ are covariates for patient $i$, $t_i$ is the time of an event or censoring and $\delta_i$ is an indicator that signifies whether $t_i$ is event time or censoring time. Later in the paper, experiments with time-variant covariates will necessitate the use of a null masking matrix, $\mathcal{M}$ <cite DeepHit>.\\
+
+For hazard and survival calculation in a discrete-time setting, the following formulation from \cite{kvamme_continuous_2019} and earlier <Gennsheimer and Narasimhan> is presented. 
+Let $\mathbb{T} = \{\tau_1, \tau_2, \ldots\ \}$ denote the timestamps corresponding to different subjects in the data.
+
+\cite{*}
+
+\bibliography{references}% Produces the bibliography via BibTeX.
+
+\end{document}
+%
+% ****** End of file apssamp.tex ******
