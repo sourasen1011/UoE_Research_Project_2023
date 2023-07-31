@@ -103,7 +103,7 @@ This relationship produces the survival function from a hazard function \cite{Mo
 Before moving to the discrete setting, some formal notation for the data is introduced. The data is assumed to be right-censored. Hence, the data, $\mathcal{D}$ can be represented as a set of tuples $\{(x_i , t_i , d_i)\}_{i=1}^{N}$  \cite{nagpal_deep_2021}. Here, $x_i \in \mathbb{R}^d$ are covariates for patient $i$. $t_i$ is the time of an event or censoring such that $t_i = min(T_i, C_i)$, where $T_i$ and $C_i$ respectively denote the times of event and censoring. A subject is assumed to have either experienced an event or have been censored, but not both. $d_i$ is an indicator that signifies whether $t_i$ is event time or censoring time. $d=1$ for a subject that experiences the event (uncensored) while $d=0$ for a subject that is censored before experiencing the event. More formally, $d= \mathbb{1}\{T_i \le C_i\}$. Later in the paper, experiments with time-variant covariates will necessitate the use of a null masking matrix, $\mathcal{M}$ <cite DeepHit>.\\
 
 \subsection{\label{discrete}Discrete-Time Survival Analysis}
-For hazard and survival calculation in a discrete-time setting, the following formulation from \cite{kvamme_continuous_2019} and earlier \cite{Gensheimer_Narasimhan_2019}<CHECK THIS?> is presented. Let $\mathbb{T} = \{\tau_1, \tau_2, \ldots\ \}$ denote the timestamps, i.e. the indices of the discrete times corresponding to different subjects in the data. The event time is $T*\in\mathbb{T}$. The definitions of PMF and survival function follow as
+For hazard and survival calculation in a discrete-time setting, the following formulation from \cite{kvamme_continuous_2019} and earlier \cite{Gensheimer_Narasimhan_2019}<CHECK THIS?> is presented. Let $\mathbb{T} = \{\tau_1, \tau_2, \ldots\ \}$ denote the timestamps, i.e. the indices of the discrete times corresponding to different subjects in the data. The event timestamp is $T*\in\mathbb{T}$. The definitions of PMF and survival function follow as
 \begin{gather*}
 f(\tau_j) = P(T* = \tau_j),\\
 S(\tau_j) = P(T* >\tau_j) = \sum_{k>j}f(\tau_k)
@@ -115,9 +115,9 @@ It can be seen that the hazard at time $\tau_j$ $h(\tau_j)$, is just the probabi
 &\implies S(\tau_j) = (1 - h(\tau_j))S(\tau_{j-1})
 \end{align}
 Recursively, the survival function can be parameterized wholly in terms of the hazard function as
-\[
-S(\tau_j) = \prod_{k=1}^{j}(1 - h(\tau_k))
-\]
+\begin{align}
+S(\tau_j) = \prod_{k=1}^{j}(1 - h(\tau_k)) \label{cum_haz=surv}
+\end{align}
 
 If there were no censoring involved, the likelihood of observing $n$ failures (events) is of the form
 \[
@@ -165,8 +165,56 @@ h(\tau_j|x_i) = g(\phi_j(x_i)) = \frac{1}{1+e^{-\phi_j(x_i)}}
 \]
 where $\phi_j(x_i)$ is the output of the neural network at node $j$ corresponding to the hazard function over the time period $[m_{j-1}, m_j)$.\\
 
+Returning to the problem at hand, for such a parameterization, the continuous time scale $\mathbb{T}$ needs to be discretized into $m$ pieces. A simple way to do this is to equally divide up the set $\mathbb{T}$ into m equal parts. The hazards across these $m$ timesteps can be cumulatively multiplied to find the survival function as seen in Eq. \ref{cum_haz=surv}.
+
 \section{\label{UQ_explain}Uncertainty Quantification and Explainability}
 An addition this work attempts to make to the above is by introducing a layer of uncertainty quantification via Monte-Carlo dropout \cite{mcdropout}. Dropout is generally reserved for training as a means to enforce regularization on the network. When applied during the testing or prediction phase as well, a probability distribution of the output is created, allowing for probabilistic inference instead of point inference as present in regular neural networks. Being uncertainty-aware ties in with the idea of interpretability of modern deep learning methods, which is often a barrier towards the adoption of such methods into highly regulated industries such as finance or medicine. SHAP (SHapley Additive exPlanations) values \cite{shap}, extended from the field of cooperative game theory provide a unified, model-agnostic method to explain the contributions of covariates to a model's output.
+
+\section{\label{model_arch}Model Architecture}
+This is a placeholder for the model architecture.
+This paper attempts to model survival functions from both a time-invariant perspective (using mean statistics of covariates) and from a time-variant perspective (using temporal dependencies of covariates <??rephrase>). The latter takes some more preprocessing and a more complex architecture.
+
+\subsection{\label{time_invar_arch}Time-Invariant}
+The simpler time-invariant version of the architecture is a multi-layer perceptron (MLP), otherwise referred to as a fully-connected neural network. Consider a batch of input covariates $x \in \mathbb{R}^{n\times d}$, where $n$ is the batch size and $d$ is the number of input covariates. The basic architecture is as follows.\\
+
+\begin{tabular}{|c|c|}
+    \hline
+    Layer Type & Shape/Rate \\
+    \hline
+    Dense (nn.Linear) & (d, h) \\
+    \hline
+    ReLU (nn.ReLU) & - \\
+    \hline
+    Batch Normalization (nn.BatchNorm1d) & h \\
+    \hline
+    Dropout (nn.Dropout) & 0.5 \\
+    \hline    
+    Dense (nn.Linear) & (h, h) \\
+    \hline
+    ReLU (nn.ReLU) & - \\
+    \hline
+    Batch Normalization (nn.BatchNorm1d) & h \\
+    \hline
+    Dropout (nn.Dropout) & 0.5\\
+    \hline
+    Dense (nn.Linear) & (h , m)\\
+    \hline
+\end{tabular}\\
+
+Here, $m$ is the output size, denoting the number of discretized time indices across time $max(\mathbb{T})$.
+
+\section{\label{data}Dataset}
+The study uses the large publicly available database MIMIC-IV \cite{mimic_iv}, which consists of critical care data from hospital and ICU admissions for over 40,000 patients admitted to intensive care units at the Beth Israel Deaconess Medical Center (BIDMC). 
+\subsection{\label{preprocess}Preprocess}
+To prepare the data, all admissions associated with a Heart Failure ICD-10 code were selected - this forms the base pool of patients. Admission and discharge times are collected along with static covariates such as patients' gender, age and date of death. Patients' ethnicity is collected and grouped into six broad categories - Native, Asian, Black, Hispanic, White and Other. (This goes in footnote - To avoid multi-collinearity issues arising later, the `OTHER' variable is dropped after one-hot encoding)\\
+
+Time-variant records such as BMI, Weight and Height are collected from Online Medical Records (OMR). Such records have an associated chart-time or chart-date, denoting when they were collected. Lab tests corresponding to cholesterol, sodium intake, lymphocyte count and hemoglobin levels <CITE!? Why just these?>. Medication administered from the classes of angiotensin-converting enzyme blockers, angiotensin receptor blockers, calcium channel blockers and beta blockers are also taken as features/ covariates. Vital signs such as temperature, heartrate, respiratory rate, $O_2$ saturation, systolic and diastolic blood pressure are also taken. Patients who have at least  one record for all of the above 4 datasets (OMR, lab test, medication and vital signs) are retained.\\
+
+\subsection{\label{censoring}Censoring}
+Patients' earliest admission time is considered as their `start' date. If their death date is not captured in the data <add footnote here>, their last known discharge time is known as their `end' date - these patients are considered to be censored. Otherwise, their date of death is taken to be the `end' date - these are the uncensored patients. The distribution of event/censoring times is quite similar across both censored and uncensored cohorts <Add image of histogram>. Standard pipelines for dummy-encoding, train-test-validation splitting, imputation and scaling are carried out. Columns with zero variance in the training data are discarded from all three datasets - train, test and validation.
+
+\section{\label{exp}Experiments and Fits}
+
 
 \cite{*}
 
