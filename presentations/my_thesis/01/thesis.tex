@@ -38,6 +38,8 @@
     pdfpagemode=FullScreen,
     }
 \setlength\parindent{0pt} % zero indent
+\renewcommand\thesection{\arabic{section}} % for arabic numerals
+\setcounter{secnumdepth}{3} % for arabic numerals
 
 \begin{document}
 
@@ -63,7 +65,7 @@ The study aims to compare the performance of Deep Learning (DL) architectures fo
 \section{\label{intro}Introduction}
 Heart failure is a clinical syndrome interfering with the heart's ability to pump blood, leading to a reduced ability to perform systemic circulation. This condition is widespread globally - approximately 26 million people worldwide are estimated to be affected by heart failure \cite{Savarese_Lund_2017}. Hence, accurately predicting risk is crucial for improving patient outcomes. Traditional survival analysis can be limited in its ability to handle complex non-linear dependencies as well as accounting for time-variant patient characteristics <this is not really true>. Deep Learning is an exciting tool in this aspect due to its innate ability to handle complex non-linear relationships <include citation - NNs are universal function approximators>. While there has been work done on adapting deep learning to the survival analysis domain (see: ), it is still a growing field. As DL is generally labeled as data-hungry <include citation>, the advent of EHR data with its vast longitudinal bandwidth(??) looks promising to be used in conjunction with DL. This study will attempt to validate the hypothesis that HDL outperforms traditional survival analysis in terms of prediction accuracy using real-world EHR data. The findings may have important implications for clinical practice, healthcare resource allocation, and future research in risk prediction modeling for HF patients with frailty.
 
-The paper is organized as follows. Section 2 contains a brief review of related work in this capacity. Section 3 presents a more rigorous understanding of survival analysis, before building up to how discrete hazard rates \cite{Gensheimer_Narasimhan_2019} <CHECK THIS?> (as used in this paper) can be parameterized by a neural network \cite{kvamme_continuous_2019}. A suitable loss function is chosen from the available literature and is derived as per \cite{kvamme_continuous_2019}. Some of the neural network architectures used in this paper (MLP, CNN, PCA) are briefly touched upon although their more rigorous descriptions are beyond the direct scope of the paper - hence they are detailed in the Appendices. Section 4 delves into Uncertainty Quantification, by way of Monte Carlo (MC) dropout and looks at explainability of the model(s) built. Section 5 discusses the data used for the paper - MIMIC-IV. Section 6 looks at the results by means of experiments over real and synthetic data and compares the architechture to existing solutions from deep learning and traditional survival analysis. Section 7 is reserved for proposed extensions to the model and further work that could be done.
+The paper is organized as follows. Section 2 contains a brief review of related work in this capacity. Section 3 presents a more rigorous understanding of survival analysis, before building up to how discrete hazard rates \cite{Gensheimer_Narasimhan_2019} <CHECK THIS?> (as used in this paper) can be parameterized by a neural network \cite{kvamme_continuous_2019}. A suitable loss function is chosen from the available literature and is derived as per \cite{kvamme_continuous_2019}. Section 4 delves into Uncertainty Quantification, by way of Monte Carlo (MC) dropout and looks at explainability of the model(s) built. Section 5 discusses the data used for the paper - MIMIC-IV. Section 6 looks at the results by means of experiments over real and synthetic data and compares the architechture to existing solutions from deep learning and traditional survival analysis. Section 7 is reserved for proposed extensions to the model and further work that could be done. Some of the supervised and unsupervised methods used in this paper (MLP, CNN, PCA) are detailed in the Appendices.
 
 \section{\label{rescon}Related Work}
 Traditional survival analysis has been used extensively to predict mortality in this patient population. Deep learning methods have also been employed - see \cite{e2edlgjoreski}, \cite{nirschl2018deep}, \cite{10.1001/jamanetworkopen.2019.6972}, \cite{asolares2020} and \cite{lorenzoni_2019}. However, limited work has been done in predicting mortality and hospitalization in HF patients with frailty, especially using electronic health records (EHR) data. Several past papers have addressed predictive modeling for heart failure patients. A deep neural network model with learned medical feature embedding is proposed in \cite{che2017} to address high dimensionality and temporality in electronic health record (EHR) data. Here, a convolutional neural network is used to capture non-linear longitudinal evolution of EHRs and local temporal dependency for risk prediction, and embed medical features to account for high dimensionality. Experiments show promising results in predicting risks for congestive heart failure.\\
@@ -72,7 +74,8 @@ Personalized predictive modeling is investigated in \cite{suo2017personalized}, 
 
 Maintaining interpretability across deep learning models is explored in \cite{caicedo2019iseeu}. Many previous studies using machine learning for modeling the risk of HF in patients have focused on discretized outputs. This study aims to consider incidences as time-to-event to enable continuous probabilistic risk prediction for hospitalization and mortality, addressing a critical need in patient care. The use of EHR such as those available in CPRD, allows access to comprehensive longitudinal data, which captures the entire cycle of a patient's diagnosis and treatment. <Add citations  for PyCox, Deep Survival Machines, Deep Survival Analysis, Faraggi-Simon, DeepSurv, RNN-SURV, >
 
-\section{\label{surv}Survival Analysis: Basics}
+\section{\label{surv}Survival Analysis}
+\subsection{\label{surv_basics}Basics}
 Survival analysis deals with the estimation of a survival distribution representing the probability of an event of interest, typically a failure, to occur beyond a certain time in the future \cite{nagpal_deep_2021}. One way to specify the survival distribution is through the survival function. The survival function defines the probability of surviving till point t \cite{Moore_2016}.
 \[
 S(t) = P(T>t), \ 0 < t <  \infty
@@ -99,6 +102,7 @@ This relationship produces the survival function from a hazard function \cite{Mo
 
 Before moving to the discrete setting, some formal notation for the data is introduced. The data is assumed to be right-censored. Hence, the data, $\mathcal{D}$ can be represented as a set of tuples $\{(x_i , t_i , d_i)\}_{i=1}^{N}$  \cite{nagpal_deep_2021}. Here, $x_i \in \mathbb{R}^d$ are covariates for patient $i$. $t_i$ is the time of an event or censoring such that $t_i = min(T_i, C_i)$, where $T_i$ and $C_i$ respectively denote the times of event and censoring. A subject is assumed to have either experienced an event or have been censored, but not both. $d_i$ is an indicator that signifies whether $t_i$ is event time or censoring time. $d=1$ for a subject that experiences the event (uncensored) while $d=0$ for a subject that is censored before experiencing the event. More formally, $d= \mathbb{1}\{T_i \le C_i\}$. Later in the paper, experiments with time-variant covariates will necessitate the use of a null masking matrix, $\mathcal{M}$ <cite DeepHit>.\\
 
+\subsection{\label{discrete}Discrete-Time Survival Analysis}
 For hazard and survival calculation in a discrete-time setting, the following formulation from \cite{kvamme_continuous_2019} and earlier \cite{Gensheimer_Narasimhan_2019}<CHECK THIS?> is presented. Let $\mathbb{T} = \{\tau_1, \tau_2, \ldots\ \}$ denote the timestamps, i.e. the indices of the discrete times corresponding to different subjects in the data. The event time is $T*\in\mathbb{T}$. The definitions of PMF and survival function follow as
 \begin{gather*}
 f(\tau_j) = P(T* = \tau_j),\\
@@ -123,7 +127,9 @@ As per \cite{Moore_2016}, for an observed event, the pdf is retained. But for a 
 \[
 L(t_1 , t_2 , \ldots , t_n) = \prod^{n}_{i=1}f(t_i)^{\delta_i}S(t_i)^{1-\delta_i}=\prod^{n}_{i=1}h(t_i)^{\delta_i}S(t_i)
 \]
-The following derivation is taken from \cite{kvamme_continuous_2019}. For notational convenience, let $\kappa(t) \in \{0, \ldots , m\}$ define the index of the discrete time $t$, meaning $t = \tau_{\kappa(t)}$. Thus, the likelihood contribution for individual $i$ is seen to be 
+
+\subsection{\label{loss}Loss Function}
+\textbf{The following derivation is taken from \cite{kvamme_continuous_2019}.} For notational convenience, let $\kappa(t) \in \{0, \ldots , m\}$ define the index of the discrete time $t$, meaning $t = \tau_{\kappa(t)}$. Thus, the likelihood contribution for individual $i$ is seen to be 
 
 \begin{align*}
 &L_i = f(t_i)^{\delta_i}S(t_i)^{1-\delta_i}\\
@@ -148,7 +154,8 @@ To adjust for varying batch sizes, the mean negative log likelihood is taken as 
 \end{align*}
 This can now be minimized by gradient-based methods, thus making it a useful loss function for a neural network to work with. Here, $y_{ij}$ is an indicator variable corresponding to 1 if and only if an event is experienced by the individual $i$ at time $t_j$. Hence, $y$ is a sparse matrix consisting of mostly 0 with 1 only present when the time $t_i$ represents an observed event $d_i = 1$. The loss can be thought of as the negative log likelihood of Bernoulli data $\theta^p(1-\theta)^{1-p}$, where $\theta=h(\tau_j|x_i)$ and $p=y_{ij}$(<noted by Brown 1975>) and can be computed using existing functions in the PyTorch library.\\
 
-As hazards are conditional probabilities (see \ref{haz_cond_proba}), they must lie within $[0,1]$. A handy function for this is the sigmoid non-linearity
+\subsection{\label{nn_param}Neural Network Parameterization}
+As hazards are conditional probabilities (see Eq. \ref{haz_cond_proba}), they must lie within $[0,1]$. A handy function for this is the sigmoid non-linearity
 \[
 g(x) = \frac{1}{1+e^{-x}}
 \]
@@ -156,7 +163,10 @@ For a neural network taking $x_i$ (the covariates of patient $i$) as input and p
 \[
 h(\tau_j|x_i) = g(\phi_j(x_i)) = \frac{1}{1+e^{-\phi_j(x_i)}}
 \]
-where $\phi_j(x_i)$ is the output of the neural network at node $j$ corresponding to the hazard function over the time period $[m_{j-1}, m_j)$.
+where $\phi_j(x_i)$ is the output of the neural network at node $j$ corresponding to the hazard function over the time period $[m_{j-1}, m_j)$.\\
+
+\section{\label{UQ_explain}Uncertainty Quantification and Explainability}
+An addition this work attempts to make to the above is by introducing a layer of uncertainty quantification via Monte-Carlo dropout \cite{mcdropout}. Dropout is generally reserved for training as a means to enforce regularization on the network. When applied during the testing or prediction phase as well, a probability distribution of the output is created, allowing for probabilistic inference instead of point inference as present in regular neural networks. Being uncertainty-aware ties in with the idea of interpretability of modern deep learning methods, which is often a barrier towards the adoption of such methods into highly regulated industries such as finance or medicine. SHAP (SHapley Additive exPlanations) values \cite{shap}, extended from the field of cooperative game theory provide a unified, model-agnostic method to explain the contributions of covariates to a model's output.
 
 \cite{*}
 
