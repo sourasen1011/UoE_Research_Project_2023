@@ -100,6 +100,14 @@ h(t) = -\frac{d}{dt}S(t)\frac{1}{S(t)}\\
 \end{gather*}
 This relationship produces the survival function from a hazard function \cite{Moore_2016}.\\
 
+\subsection{\label{trad_fits}A Brief Review of Traditional Fitters}
+In the context of continuous time survival models, the Cox Proportional Hazards model has long been the `gold-standard' for survival analysis <cite?>. Extensions have been made for Cox models to incorporate time-varying covariates as well as introduce the capability to handle non-linear hazards <cite Katzman> (although the proportional hazards assumption remains).\\
+
+Accelerated failure time models are also popular <cite>, as they allow the incorporation of an acceleration (and conversely decelration) of the hazard rates.\\
+
+Random Survival Forest models have managed to achieve state-of-the-art performance. At the cost of higher fitting times, they deliver high discriminative power with impressive calibration <cite>.\\
+
+\subsection{\label{setting}Data Setup}
 Before moving to the discrete setting, some formal notation for the data is introduced. The data is assumed to be right-censored. Hence, the data, $\mathcal{D}$ can be represented as a set of tuples $\{(x_i , t_i , d_i)\}_{i=1}^{N}$  \cite{nagpal_deep_2021}. Here, $x_i \in \mathbb{R}^d$ are covariates for patient $i$. $t_i$ is the time of an event or censoring such that $t_i = min(T_i, C_i)$, where $T_i$ and $C_i$ respectively denote the times of event and censoring. A subject is assumed to have either experienced an event or have been censored, but not both. $d_i$ is an indicator that signifies whether $t_i$ is event time or censoring time. $d=1$ for a subject that experiences the event (uncensored) while $d=0$ for a subject that is censored before experiencing the event. More formally, $d= \mathbb{1}\{T_i \le C_i\}$. Later in the paper, experiments with time-variant covariates will necessitate the use of a null masking matrix, $\mathcal{M}$ <cite DeepHit>.\\
 
 \subsection{\label{discrete}Discrete-Time Survival Analysis}
@@ -165,7 +173,7 @@ h(\tau_j|x_i) = g(\phi_j(x_i)) = \frac{1}{1+e^{-\phi_j(x_i)}}
 \]
 where $\phi_j(x_i)$ is the output of the neural network at node $j$ corresponding to the hazard function over the time period $[m_{j-1}, m_j)$.\\
 
-Returning to the problem at hand, for such a parameterization, the continuous time scale $\mathbb{T}$ needs to be discretized into $m$ pieces. A simple way to do this is to equally divide up the set $\mathbb{T}$ into m equal parts. The hazards across these $m$ timesteps can be cumulatively multiplied to find the survival function as seen in Eq. \ref{cum_haz=surv}.
+Returning to the problem at hand, for such a parameterization, the continuous time scale $\mathbb{T}$ needs to be discretized into $m$ pieces. A simple way to do this is to equally divide up the set $\mathbb{T}$ into $m$ equal parts. The hazards across these $m$ timesteps can be cumulatively multiplied to find the survival function as seen in Eq. \ref{cum_haz=surv}.
 
 \section{\label{UQ_explain}Uncertainty Quantification and Explainability}
 An addition this work attempts to make to the above is by introducing a layer of uncertainty quantification via Monte-Carlo dropout \cite{mcdropout}. Dropout is generally reserved for training as a means to enforce regularization on the network. When applied during the testing or prediction phase as well, a probability distribution of the output is created, allowing for probabilistic inference instead of point inference as present in regular neural networks. Being uncertainty-aware ties in with the idea of interpretability of modern deep learning methods, which is often a barrier towards the adoption of such methods into highly regulated industries such as finance or medicine. SHAP (SHapley Additive exPlanations) values \cite{shap}, extended from the field of cooperative game theory provide a unified, model-agnostic method to explain the contributions of covariates to a model's output.
@@ -181,27 +189,27 @@ The simpler time-invariant version of the architecture is a multi-layer perceptr
     \hline
     Layer Type & Shape/Rate \\
     \hline
-    Dense (nn.Linear) & (d, h) \\
+    Dense (nn.Linear) & ($d, h$) \\
     \hline
     ReLU (nn.ReLU) & - \\
     \hline
-    Batch Normalization (nn.BatchNorm1d) & h \\
+    Batch Normalization (nn.BatchNorm1d) & $h$ \\
     \hline
     Dropout (nn.Dropout) & 0.5 \\
     \hline    
-    Dense (nn.Linear) & (h, h) \\
+    Dense (nn.Linear) & ($h, h$) \\
     \hline
     ReLU (nn.ReLU) & - \\
     \hline
-    Batch Normalization (nn.BatchNorm1d) & h \\
+    Batch Normalization (nn.BatchNorm1d) & $h$ \\
     \hline
     Dropout (nn.Dropout) & 0.5\\
     \hline
-    Dense (nn.Linear) & (h , m)\\
+    Dense (nn.Linear) & ($h , m$)\\
     \hline
 \end{tabular}\\
 
-Here, $m$ is the output size, denoting the number of discretized time indices across time $max(\mathbb{T})$.
+Here, $m$ is the output size, denoting the number of discretized time indices across time $max(\mathbb{T})$, WHILE $h$ denotes the number of hidden nodes in the linear layers.
 
 \section{\label{data}Dataset}
 The study uses the large publicly available database MIMIC-IV \cite{mimic_iv}, which consists of critical care data from hospital and ICU admissions for over 40,000 patients admitted to intensive care units at the Beth Israel Deaconess Medical Center (BIDMC). 
@@ -213,7 +221,17 @@ Time-variant records such as BMI, Weight and Height are collected from Online Me
 \subsection{\label{censoring}Censoring}
 Patients' earliest admission time is considered as their `start' date. If their death date is not captured in the data <add footnote here>, their last known discharge time is known as their `end' date - these patients are considered to be censored. Otherwise, their date of death is taken to be the `end' date - these are the uncensored patients. The distribution of event/censoring times is quite similar across both censored and uncensored cohorts <Add image of histogram>. Standard pipelines for dummy-encoding, train-test-validation splitting, imputation and scaling are carried out. Columns with zero variance in the training data are discarded from all three datasets - train, test and validation.
 
+
+\section{\label{metrics}Evaluation Metrics}
+As survival analysis differs from ordinary linear regression in the aspect that not all the survival times are known (right-censoring), there is merit in reviewing the evaluation metrics for this task. The two metrics used in the experimental setup are the time-dependent concordance index (in favour of the regular concordance index) and the Brier score (along with its aggregated version, the integrated Brier score).
+
+\subsection{\label{tdci}Time-Dependent Concordance Index ($td$-concordance index)}
+The C-index, often referred to as ``Harrell's C-Index'' or simply as the C-statistic is a measure of the discriminative capacity of a model. In essence, it is the generalization of the ROC (Receiver Operator Characteristic) curve - AUC in a survival analysis setting <Rephrase??> \cite{c_index} \cite{pysurv_c_index}.
+
+\subsection{\label{ibs}Brier Score}
+This is a placeholder
 \section{\label{exp}Experiments and Fits}
+This is a placeholder
 
 
 \cite{*}
