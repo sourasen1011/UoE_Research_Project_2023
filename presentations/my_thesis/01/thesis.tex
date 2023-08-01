@@ -211,6 +211,8 @@ The simpler time-invariant version of the architecture is a multi-layer perceptr
 
 Here, $m$ is the output size, denoting the number of discretized time indices across time $max(\mathbb{T})$, while $h$ denotes the number of hidden nodes in the linear layers.
 
+Optimizer - Nesterov Momentum, Learning Rate scheduler - decay!
+
 \section{\label{data}Dataset}
 The study uses the large publicly available database MIMIC-IV \cite{mimic_iv}, which consists of critical care data from hospital and ICU admissions for over 40,000 patients admitted to intensive care units at the Beth Israel Deaconess Medical Center (BIDMC). 
 \subsection{\label{preprocess}Preprocess}
@@ -245,7 +247,19 @@ It can be interpreted as the fraction of all pairs of subjects whose predicted s
 There are limitations with the traditional c-index as highlighted by \cite{Hartman_Kim_He_Kalbfleisch_2023}, an important one being the assumption that the risk scores do not change over time. \cite{Heagerty_Zheng_2005} propose a time-dependent concordance index which essentially takes a weighted average of time-specific C-index values across the entire time scale.
 
 \subsection{\label{ibs}Brier Score}
-This is a placeholder
+
+Contrasting the discriminatory power of the C-index, the Brier score provides a measure of how well the model is calibrated. It represents the distance between observed and predicted survival probability - hence 0 is the most desirable value. Given the data, $\mathcal{D}$, a set of tuples $\{(x_i , t_i , d_i)\}_{i=1}^{N}$ and the predicted survival function $\hat{S}(t, x_i),\ \forall t \in \mathbb{R^{+}}$, the Brier score (without right-censored observations) assumes a form similar to the mean-squared-error.
+\[
+BS(t) = \frac{1}{N}\sum^{N}_{i=1}(\mathbb{I}_{T_i>t}-\hat{S}(t, x_i))^2
+\]
+
+With the occurence of right-censored data, the formula needs to be adjusted by the inverse probability of censoring weights method <cite?>. Let $\hat{G}(t) = P[C>t]$ be the estimator of the conditional survival function of the censoring times calculated using the Kaplan-Meier method, where C is the censoring time.
+
+\begin{gather*}
+BS(t) = \frac{1}{N}\sum^{N}_{i=1}\Bigg(\frac{(0-\hat{S}(t,x_i))^2 \cdot \mathbb{I}_{T_i\le t, d_i = 1}}{\hat{G}(T_i)} +\\
+\frac{(1-\hat{S}(t,x_i))^2 \cdot \mathbb{I}_{T_i > t}}{\hat{G}(t)} \Bigg)
+\end{gather*}
+
 \section{\label{exp}Experiments and Fits}
 This is a placeholder
 
