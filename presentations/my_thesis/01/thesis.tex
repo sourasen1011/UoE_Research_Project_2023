@@ -209,7 +209,7 @@ The simpler time-invariant version of the architecture is a multi-layer perceptr
     \hline
 \end{tabular}\\
 
-Here, $m$ is the output size, denoting the number of discretized time indices across time $max(\mathbb{T})$, WHILE $h$ denotes the number of hidden nodes in the linear layers.
+Here, $m$ is the output size, denoting the number of discretized time indices across time $max(\mathbb{T})$, while $h$ denotes the number of hidden nodes in the linear layers.
 
 \section{\label{data}Dataset}
 The study uses the large publicly available database MIMIC-IV \cite{mimic_iv}, which consists of critical care data from hospital and ICU admissions for over 40,000 patients admitted to intensive care units at the Beth Israel Deaconess Medical Center (BIDMC). 
@@ -226,7 +226,23 @@ Patients' earliest admission time is considered as their `start' date. If their 
 As survival analysis differs from ordinary linear regression in the aspect that not all the survival times are known (right-censoring), there is merit in reviewing the evaluation metrics for this task. The two metrics used in the experimental setup are the time-dependent concordance index (in favour of the regular concordance index) and the Brier score (along with its aggregated version, the integrated Brier score).
 
 \subsection{\label{tdci}Time-Dependent Concordance Index ($td$-concordance index)}
-The C-index, often referred to as ``Harrell's C-Index'' or simply as the C-statistic is a measure of the discriminative capacity of a model. In essence, it is the generalization of the ROC (Receiver Operator Characteristic) curve - AUC in a survival analysis setting <Rephrase??> \cite{c_index} \cite{pysurv_c_index}.
+The C-index, often referred to as ``Harrell's C-Index'' or simply as the C-statistic is a measure of the discriminative capacity of a model. In essence, it is the generalization of the ROC (Receiver Operator Characteristic) curve - AUC in a survival analysis setting <Rephrase??> \cite{Uno_Cai_Pencina_D’Agostino_Wei_2011} \cite{pysurv}.
+
+The formula for the c-index is given as
+\[
+C-index = \frac{\sum^{i,j} 1_{T_j < T_i}\cdot 1_{\eta_j > \eta_i}\cdot d_j}{\sum^{i,j} 1_{T_j < T_i}\cdot d)j}
+\]
+
+It can be interpreted as the fraction of all pairs of subjects whose predicted survival times are correctly ordered among all subjects that can actually be ordered \cite{Pinto_Carvalho_Vinga_2015}. A pair $(i,j)$ is considered `comparable' if the one with the lower observed time is uncensored, that is, when $T_i <T_j$, then $d_i=1$. A pair is considered `concordant' when the model predicts a higher risk for the patient with a lower survival time. Thus, it follows that
+\[ c-index = 
+\begin{cases}
+    1.0, & \text{perfect concordance}, \\
+    0.5, & \text{equivalent to random classification}, \\
+    0.0, & \text{perfect anti-concordance}.
+\end{cases}
+\]
+
+There are limitations with the traditional c-index as highlighted by \cite{Hartman_Kim_He_Kalbfleisch_2023}, an important one being the assumption that the risk scores do not change over time. \cite{Heagerty_Zheng_2005} propose a time-dependent concordance index which essentially takes a weighted average of time-specific C-index values across the entire time scale.
 
 \subsection{\label{ibs}Brier Score}
 This is a placeholder
