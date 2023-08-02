@@ -57,13 +57,13 @@
              %  but any date may be explicitly specified
 
 \begin{abstract}
-The study aims to compare the performance of Deep Learning (DL) architectures for predicting mortality and hospitalization in heart failure (HF) patients, against traditional survival analysis techniques. The aim is to see if combining unsupervised and supervised learning can help estimate survival probabilities based on contextual and historic features from clinical data, and how these predictions fare against traditional techniques. By leveraging longitudinal patient data made available in the form of Electronic Health Records (EHR), a new perspective is sought on the performance of machine learning risk prediction models compared to conventional survival analysis in HF patients.
+The study aims to compare the performance of Deep Learning (DL) architectures for predicting mortality in heart failure (HF) patients, against traditional survival analysis techniques. The aim is to see if combining unsupervised and supervised learning can help estimate survival probabilities based on contextual and historic features from clinical data, and how these predictions perform against traditional techniques. By leveraging longitudinal patient data made available in the form of Electronic Health Records (EHR), an examination of the performance of machine learning risk prediction models is conducted against conventional survival analysis in HF patients.
 \end{abstract}
 
 \maketitle
 
 \section{\label{intro}Introduction}
-Heart failure is a clinical syndrome interfering with the heart's ability to pump blood, leading to a reduced ability to perform systemic circulation. This condition is widespread globally - approximately 26 million people worldwide are estimated to be affected by heart failure \cite{Savarese_Lund_2017}. Hence, accurately predicting risk is crucial for improving patient outcomes. Traditional survival analysis can be limited in its ability to handle complex non-linear dependencies as well as accounting for time-variant patient characteristics <this is not really true>. Deep Learning is an exciting tool in this aspect due to its innate ability to handle complex non-linear relationships <include citation - NNs are universal function approximators>. While there has been work done on adapting deep learning to the survival analysis domain (see: ), it is still a growing field. As DL is generally labeled as data-hungry <include citation>, the advent of EHR data with its vast longitudinal bandwidth(??) looks promising to be used in conjunction with DL. This study will attempt to validate the hypothesis that HDL outperforms traditional survival analysis in terms of prediction accuracy using real-world EHR data. The findings may have important implications for clinical practice, healthcare resource allocation, and future research in risk prediction modeling for HF patients with frailty.
+Heart failure is a clinical syndrome interfering with its ability to pump blood, leading to a reduction in systemic circulation performance. This condition is widespread globally - approximately 26 million people worldwide are estimated to be affected by heart failure \cite{Savarese_Lund_2017}. Hence, accurately predicting risk is crucial for improving patient outcomes. Traditional survival analysis can be limited in its ability to handle complex non-linear dependencies as well as accounting for time-variant patient characteristics <this is not really true>. Deep learning is an exciting tool in this aspect due to its innate ability to handle complex non-linear relationships <include citation - NNs are universal function approximators>. While there has been work done on adapting deep learning to the survival analysis domain (see: ), it is still a growing field. As DL is generally labeled as data-hungry <include citation>, the advent of EHR data with its vast longitudinal bandwidth(??) looks promising to be used in conjunction with DL. This study will attempt to validate the hypothesis that HDL outperforms traditional survival analysis in terms of prediction accuracy using real-world EHR data. The findings may have important implications for clinical practice, healthcare resource allocation, and future research in risk prediction modeling for HF patients with frailty.
 
 The paper is organized as follows. Section 2 contains a brief review of related work in this capacity. Section 3 presents a more rigorous understanding of survival analysis, before building up to how discrete hazard rates \cite{Gensheimer_Narasimhan_2019} <CHECK THIS?> (as used in this paper) can be parameterized by a neural network \cite{kvamme_continuous_2019}. A suitable loss function is chosen from the available literature and is derived as per \cite{kvamme_continuous_2019}. Section 4 delves into Uncertainty Quantification, by way of Monte Carlo (MC) dropout and looks at explainability of the model(s) built. Section 5 discusses the data used for the paper - MIMIC-IV. Section 6 looks at the results by means of experiments over real and synthetic data and compares the architechture to existing solutions from deep learning and traditional survival analysis. Section 7 is reserved for proposed extensions to the model and further work that could be done. Some of the supervised and unsupervised methods used in this paper (MLP, CNN, PCA) are detailed in the Appendices.
 
@@ -102,6 +102,8 @@ This relationship produces the survival function from a hazard function \cite{Mo
 
 \subsection{\label{trad_fits}A Brief Review of Traditional Fitters}
 In the context of continuous time survival models, the Cox Proportional Hazards model has long been the `gold-standard' for survival analysis <cite?>. Extensions have been made for Cox models to incorporate time-varying covariates as well as introduce the capability to handle non-linear hazards <cite Katzman> (although the proportional hazards assumption remains).\\
+
+Proportional hazards models are learned by optimizing Cox’s partial likelihood in classical survival analysis \cite{raykar_cindex}.
 
 Accelerated failure time models are also popular <cite>, as they allow the incorporation of an acceleration (and conversely decelration) of the hazard rates.\\
 
@@ -183,31 +185,28 @@ This is a placeholder for the model architecture.
 This paper attempts to model survival functions from both a time-invariant perspective (using mean statistics of covariates) and from a time-variant perspective (using temporal dependencies of covariates <??rephrase>). The latter takes some more preprocessing and a more complex architecture.
 
 \subsection{\label{time_invar_arch}Time-Invariant}
-The simpler time-invariant version of the architecture is a multi-layer perceptron (MLP), otherwise referred to as a fully-connected neural network. Consider a batch of input covariates $x \in \mathbb{R}^{n\times d}$, where $n$ is the batch size and $d$ is the number of input covariates. The basic architecture is as follows.\\
+The simpler time-invariant version of the architecture is a multi-layer perceptron (MLP), otherwise referred to as a fully-connected neural network. Consider a batch of input covariates $x \in \mathbb{R}^{n\times d}$, where $n$ is the batch size and $d$ is the number of input covariates. The basic architecture is as outlines in Table \ref{tab:arch}.\\
 
-\begin{tabular}{|c|c|}
+\begin{table}[h]
+  \centering
+  \begin{tabular}{|c|c|}
     \hline
-    Layer Type & Shape/Rate \\
+    \textbf{Layer Type} & \textbf{Shape/Rate} \\
     \hline
     Dense (nn.Linear) & ($d, h$) \\
-    \hline
     ReLU (nn.ReLU) & - \\
-    \hline
     Batch Normalization (nn.BatchNorm1d) & $h$ \\
-    \hline
-    Dropout (nn.Dropout) & 0.5 \\
-    \hline    
+    Dropout (nn.Dropout) & 0.5 \\ 
     Dense (nn.Linear) & ($h, h$) \\
-    \hline
     ReLU (nn.ReLU) & - \\
-    \hline
     Batch Normalization (nn.BatchNorm1d) & $h$ \\
+    Dropout (nn.Dropout) & 0.5 \\
+    Dense (nn.Linear) & ($h, m$) \\
     \hline
-    Dropout (nn.Dropout) & 0.5\\
-    \hline
-    Dense (nn.Linear) & ($h , m$)\\
-    \hline
-\end{tabular}\\
+  \end{tabular}
+  \caption{General Architecture - }
+  \label{tab:arch}
+\end{table}
 
 Here, $m$ is the output size, denoting the number of discretized time indices across time $max(\mathbb{T})$, while $h$ denotes the number of hidden nodes in the linear layers.
 
@@ -215,10 +214,14 @@ Optimizer - Nesterov Momentum, Learning Rate scheduler - decay!
 
 \section{\label{data}Dataset}
 The study uses the large publicly available database MIMIC-IV \cite{mimic_iv}, which consists of critical care data from hospital and ICU admissions for over 40,000 patients admitted to intensive care units at the Beth Israel Deaconess Medical Center (BIDMC). 
+\subsection{\label{desc}Description}
+
 \subsection{\label{preprocess}Preprocess}
 To prepare the data, all admissions associated with a Heart Failure ICD-10 code were selected - this forms the base pool of patients. Admission and discharge times are collected along with static covariates such as patients' gender, age and date of death. Patients' ethnicity is collected and grouped into six broad categories - Native, Asian, Black, Hispanic, White and Other. (This goes in footnote - To avoid multi-collinearity issues arising later, the `OTHER' variable is dropped after one-hot encoding)\\
 
 Time-variant records such as BMI, Weight and Height are collected from Online Medical Records (OMR). Such records have an associated chart-time or chart-date, denoting when they were collected. Lab tests corresponding to cholesterol, sodium intake, lymphocyte count and hemoglobin levels <CITE!? Why just these?>. Medication administered from the classes of angiotensin-converting enzyme blockers, angiotensin receptor blockers, calcium channel blockers and beta blockers are also taken as features/ covariates. Vital signs such as temperature, heartrate, respiratory rate, $O_2$ saturation, systolic and diastolic blood pressure are also taken. Patients who have at least  one record for all of the above 4 datasets (OMR, lab test, medication and vital signs) are retained.\\
+
+Patients are randomly distributed into train, test and validation pools. Across each pool, their survival time is discretized into $q=15$ buckets or time intervals, with $m_i=j$ denoting that the $i^{th}$ patient experienced an event or was censored over the $m^{th}$ time interval.
 
 \subsection{\label{censoring}Censoring}
 Patients' earliest admission time is considered as their `start' date. If their death date is not captured in the data <add footnote here>, their last known discharge time is known as their `end' date - these patients are considered to be censored. Otherwise, their date of death is taken to be the `end' date - these are the uncensored patients. The distribution of event/censoring times is quite similar across both censored and uncensored cohorts <Add image of histogram>. Standard pipelines for dummy-encoding, train-test-validation splitting, imputation and scaling are carried out. Columns with zero variance in the training data are discarded from all three datasets - train, test and validation.
@@ -260,13 +263,53 @@ BS(t) = \frac{1}{N}\sum^{N}_{i=1}\Bigg(\frac{(0-\hat{S}(t,x_i))^2 \cdot \mathbb{
 \frac{(1-\hat{S}(t,x_i))^2 \cdot \mathbb{I}_{T_i > t}}{\hat{G}(t)} \Bigg)
 \end{gather*}
 
-\section{\label{exp}Experiments and Fits}
-This is a placeholder
+An aggregated version of this score provides a simpler (albeit more reductive) summary of the calibration of a model.
+\[
+IBS(t_{max})= \int^{t_{max}}_{0} BS(t) dt
+\]
 
+\section{\label{exp}Experiments and Fits}
+A series of experiments were conducted on this data from both a time-invariant and a time-varying perspective. The  survival distributions were examined with non-parametric fitters - Kaplan-Meier fitter and Nelson-Aalen fitter. A short write-up on these methods can be found in the Appendix.\\
+
+Next, a range of parametric, semi-parametric, tree-based and neural network-based methods were applied to the data and their evaluation criteria noted. To establish confidence intervals on said criteria, fits were run multiple times. The details are listed in Table \ref{tab:eval}.\\
+
+\begin{table*}[t]
+  \centering
+  \begin{tabular}{|p{4cm}|p{6cm}|p{2cm}|p{2cm}|}
+     \hline
+    \textbf{Model} & \textbf{Parameters} & \textbf{C-Index} & \textbf{IBS} \\
+    \hline
+    Cox Proportional Hazards & penalizer = 0.1, step\_size = 0.1 & 0.6808 & 0.1685\\
+    \hline
+    Weibull AFT & penalizer = 0.01  & 0.6804 & 0.1748\\
+    \hline
+    Random Survival Forest & n\_estimators=1000, min\_samples\_split=10, min\_samples\_leaf=15, n\_jobs=-1, random\_state=1234, oob\_score = True  & 0.6975 & 0.1956\\
+    \hline
+  \end{tabular}
+  \caption{Evaluation metrics}
+  \label{tab:eval}
+\end{table*}
+
+
+\section{\label{conc}Conclusions}
+Amongst the neural network models, the architecture is sacrificing calibration for discriminatory power.
 
 \cite{*}
 
 \bibliography{references}% Produces the bibliography via BibTeX.
+
+\appendix
+
+\section{\label{appdx}Appenidx}
+
+Some formal mathematical formulations of the methods used in this paper are elaborated in the following sections
+\subsection{\label{non_param}Non-Parametric Fits}
+The Kaplan Meier fitter
+
+The Nelson Aalen
+
+
+
 
 \end{document}
 %
