@@ -101,9 +101,29 @@ h(t) = -\frac{d}{dt}S(t)\frac{1}{S(t)}\\
 This relationship produces the survival function from a hazard function \cite{Moore_2016}.\\
 
 \subsection{\label{trad_fits}A Brief Review of Traditional Fitters}
-In the context of continuous time survival models, the Cox Proportional Hazards model has long been the `gold-standard' for survival analysis <cite?>. Extensions have been made for Cox models to incorporate time-varying covariates as well as introduce the capability to handle non-linear hazards <cite Katzman> (although the proportional hazards assumption remains).\\
+In the context of continuous time survival models, the Cox Proportional Hazards model has long been the `gold-standard' for survival analysis <cite?>. Extensions have been made for Cox models to incorporate time-varying covariates as well as introduce the capability to handle non-linear hazards <cite Katzman> (although the proportional hazards assumption remains). The assumption of a proportional hazards model is that the covariates have a multiplicative effect on the hazard.
+\[
+h(t|x) = h_0(t)e^{w^Tx}
+\]
+where $h_0$ is called as the baseline hazard.\\
 
-Proportional hazards models are learned by optimizing Cox’s partial likelihood in classical survival analysis \cite{raykar_cindex}.
+Proportional hazards models are learned by optimizing Cox’s partial likelihood in classical survival analysis \cite{raykar_cindex}. A general formulation is derived as follows \cite{Moore_2016}. Consider failure time $t_i$. The set of all subjects in the trial “at risk” for failure at this time is denoted by $j:Y_j>Y_i$. The probability of Patient $i$ failing at this time is 
+\[
+L_i = \frac{h(t_i | x_i)}{\sum^{}_{j:Y_j>Y_i}h(t_i|x_j)}
+\]
+where $h(t|x)$ denotes the hazard for patient with covariates $x$ at time $t$. The likelihood of the entire cohort is thus,
+\[
+L = \prod^{}_{i:C_i=1}L_i = \prod^{}_{i:C_i=1}\frac{h(t_i | x_i)}{\sum^{}_{j:Y_j>Y_i}h(t_i|x_j)}
+\]
+where $C_i=1$ denotes an observed (uncensored) event. The assumption of a proportional hazards model reduces this to
+\[
+L = \prod^{}_{C_i=1}\frac{e^{w^Tx_i}}{\sum^{}_{j:Y_j>Y_i}e^{w^Tx_j}}
+\] 
+
+It is noted that the baseline hazard $h_0$ is canceled from both the numerator and the denominator \cite{raykar_cindex}.
+
+
+
 
 Accelerated failure time models are also popular <cite>, as they allow the incorporation of an acceleration (and conversely decelration) of the hazard rates.\\
 
@@ -226,7 +246,6 @@ Patients are randomly distributed into train, test and validation pools. Across 
 \subsection{\label{censoring}Censoring}
 Patients' earliest admission time is considered as their `start' date. If their death date is not captured in the data <add footnote here>, their last known discharge time is known as their `end' date - these patients are considered to be censored. Otherwise, their date of death is taken to be the `end' date - these are the uncensored patients. The distribution of event/censoring times is quite similar across both censored and uncensored cohorts <Add image of histogram>. Standard pipelines for dummy-encoding, train-test-validation splitting, imputation and scaling are carried out. Columns with zero variance in the training data are discarded from all three datasets - train, test and validation.
 
-
 \section{\label{metrics}Evaluation Metrics}
 As survival analysis differs from ordinary linear regression in the aspect that not all the survival times are known (right-censoring), there is merit in reviewing the evaluation metrics for this task. The two metrics used in the experimental setup are the time-dependent concordance index (in favour of the regular concordance index) and the Brier score (along with its aggregated version, the integrated Brier score).
 
@@ -269,7 +288,7 @@ IBS(t_{max})= \int^{t_{max}}_{0} BS(t) dt
 \]
 
 \section{\label{exp}Experiments and Fits}
-A series of experiments were conducted on this data from both a time-invariant and a time-varying perspective. The  survival distributions were examined with non-parametric fitters - Kaplan-Meier fitter and Nelson-Aalen fitter. A short write-up on these methods can be found in the Appendix.\\
+A series of experiments were conducted on this data from both a time-invariant and a time-varying perspective. The  survival distributions were examined with non-parametric fitters - Kaplan-Meier fitter and Nelson-Aalen fitter. A short write-up on these methods can be found in the Appendix \ref{appdx}. \\
 
 Next, a range of parametric, semi-parametric, tree-based and neural network-based methods were applied to the data and their evaluation criteria noted. To establish confidence intervals on said criteria, fits were run multiple times. The details are listed in Table \ref{tab:eval}.\\
 
@@ -277,13 +296,20 @@ Next, a range of parametric, semi-parametric, tree-based and neural network-base
   \centering
   \begin{tabular}{|p{4cm}|p{6cm}|p{2cm}|p{2cm}|}
      \hline
-    \textbf{Model} & \textbf{Parameters} & \textbf{C-Index} & \textbf{IBS} \\
+    \textbf{Model} & \textbf{HyperParameters} & \textbf{C-Index} & \textbf{IBS} \\
     \hline
     Cox Proportional Hazards & penalizer = 0.1, step\_size = 0.1 & 0.6808 & 0.1685\\
     \hline
     Weibull AFT & penalizer = 0.01  & 0.6804 & 0.1748\\
     \hline
     Random Survival Forest & n\_estimators=1000, min\_samples\_split=10, min\_samples\_leaf=15, n\_jobs=-1, random\_state=1234, oob\_score = True  & 0.6975 & 0.1956\\
+    \hline
+    PyCox (with Logistic Hazard loss function \cite{kvamme_continuous_2019}) & no. of discretization=15, layers=[256,256],  batch\_norm=True, dropout=0.5, batch\_size=256, epochs=500 & 0.5974 & 0.1768\\
+    \hline
+    Deep Survival Machhines & k=6, distribution=LogNormal, learning\_rate=1e-3, layers=[100, 100] & 0.6441 & 0.2724\\
+    \hline
+    DeepSurv & batch\_size=256, num\_epochs=1000, learning\_rate=0.01, patience=50, hidden\_size=100, 
+droutput\_rate = 0.1 & 0.4259 & - \\
     \hline
   \end{tabular}
   \caption{Evaluation metrics}
