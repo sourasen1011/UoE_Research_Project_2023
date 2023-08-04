@@ -119,11 +119,11 @@ where $C_i=1$ denotes an observed (uncensored) event. The assumption of a propor
 \[
 L = \prod^{}_{C_i=1}\frac{e^{w^Tx_i}}{\sum^{}_{j:Y_j>Y_i}e^{w^Tx_j}}
 \] 
-
-It is noted that the baseline hazard $h_0$ is canceled from both the numerator and the denominator \cite{raykar_cindex}.
-
-
-
+It is noted that the baseline hazard $h_0$ is canceled from both the numerator and the denominator \cite{raykar_cindex}. The log likelihood therefore becomes
+\[
+\ell = \sum^{}_{i:C_i=1} \Bigg( w^Tx_i - log\sum^{}_{j:Y_j>Y_i}e^{w^Tx_j}\Bigg)
+\]
+This negative of this log-likelihood is used as the loss function for Deep Surv <cite katzman> and the Faraggi-Simon <cite faraggi-simon> implementation of deep Cox proportional hazards models.\\
 
 Accelerated failure time models are also popular <cite>, as they allow the incorporation of an acceleration (and conversely decelration) of the hazard rates.\\
 
@@ -174,7 +174,7 @@ For all the individuals, the combined log-likelihood is
 From here, the loss function for a batch can be constructed as the negative log likelihood.
 \begin{align*}
 &log(L) = \sum^{i=1}_{n}\Bigg(d_i log[h(t_i|x_i)]+(1-d_i)log[1-h(t_i|x_i)]+\\
-&\sum^{\kappa(t_i)-1}{j=1}log[1 - h(\tau_j|x_i)] \Bigg)
+&\sum^{\kappa(t_i)-1}_{j=1}log[1 - h(\tau_j|x_i)] \Bigg)
 \end{align*}
 To adjust for varying batch sizes, the mean negative log likelihood is taken as the loss.
 \begin{align*}
