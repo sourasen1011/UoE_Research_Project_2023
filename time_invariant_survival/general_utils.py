@@ -26,9 +26,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
 
-# Set the random seed
-np.random.seed(123)
-random_state = 123
+# # Set the random seed
+# np.random.seed(123)
+# random_state = 123
 
 # Add the outer directory
 sys.path.append('../')
