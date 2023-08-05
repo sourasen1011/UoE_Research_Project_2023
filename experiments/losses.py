@@ -38,14 +38,14 @@ class generic_Loss(torch.nn.Module):
         last_pred_survival = _survival[: , -1]
             
         # get comparable mask
-        comp_mask = self.get_comparable_mask(times , events)
+        comp_mask = self._get_comparable_mask(times , events)
             
         # get loss - in order to maximise the LBO of the C-index, its negative needs to be minimized
-        loss = -self.cindex_lower_bound(comp_mask , last_pred_survival , times)
+        loss = -self._cindex_lower_bound(comp_mask , last_pred_survival , times)
 
         return loss
 
-    def cindex_lower_bound(self , comp_mask, pred_times, times):
+    def _cindex_lower_bound(self , comp_mask, pred_times, times):
         '''
         comp_mask - comparable mask (no need for times and events separately)
         pred_times - predicted survival times / (or survival probabilities)
@@ -69,7 +69,7 @@ class generic_Loss(torch.nn.Module):
             
         return lb
 
-    def get_comparable_mask(self , times, events):
+    def _get_comparable_mask(self , times, events):
         # Get order
         _, order = torch.sort(times)
         eve_ordered = events[order]
