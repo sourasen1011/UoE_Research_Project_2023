@@ -33,6 +33,8 @@
 \usepackage{float}
 \usepackage{hyperref}
 \usepackage{enumitem}
+\usepackage{amsfonts}
+\usepackage{dsfont}
 \hypersetup{
     pdftitle={uoe23thesis},
     pdfpagemode=FullScreen,
@@ -130,7 +132,7 @@ Accelerated failure time models are also popular <cite>, as they allow the incor
 Random Survival Forest models have managed to achieve state-of-the-art performance. At the cost of higher fitting times, they deliver high discriminative power with impressive calibration <cite>.\\
 
 \subsection{\label{setting}Data Setup}
-Before moving to the discrete setting, some formal notation for the data is introduced. The data is assumed to be right-censored. Hence, the data, $\mathcal{D}$ can be represented as a set of tuples $\{(x_i , t_i , d_i)\}_{i=1}^{N}$  \cite{nagpal_deep_2021}. Here, $x_i \in \mathbb{R}^d$ are covariates for patient $i$. $t_i$ is the time of an event or censoring such that $t_i = min(T_i, C_i)$, where $T_i$ and $C_i$ respectively denote the times of event and censoring. A subject is assumed to have either experienced an event or have been censored, but not both. $d_i$ is an indicator that signifies whether $t_i$ is event time or censoring time. $d=1$ for a subject that experiences the event (uncensored) while $d=0$ for a subject that is censored before experiencing the event. More formally, $d= \mathbb{1}\{T_i \le C_i\}$. Later in the paper, experiments with time-variant covariates will necessitate the use of a null masking matrix, $\mathcal{M}$ <cite DeepHit>.\\
+Before moving to the discrete setting, some formal notation for the data is introduced. The data is assumed to be right-censored. Hence, the data, $\mathcal{D}$ can be represented as a set of tuples $\{(x_i , t_i , d_i)\}_{i=1}^{N}$  \cite{nagpal_deep_2021}. Here, $x_i \in \mathbb{R}^d$ are covariates for patient $i$. $t_i$ is the time of an event or censoring such that $t_i = min(T_i, C_i)$, where $T_i$ and $C_i$ respectively denote the times of event and censoring. A subject is assumed to have either experienced an event or have been censored, but not both. $d_i$ is an indicator that signifies whether $t_i$ is event time or censoring time. $d=1$ for a subject that experiences the event (uncensored) while $d=0$ for a subject that is censored before experiencing the event. More formally, $d= \mathds{1}\{T_i \le C_i\}$. Later in the paper, experiments with time-variant covariates will necessitate the use of a null masking matrix, $\mathcal{M}$ <cite DeepHit>.\\
 
 \subsection{\label{discrete}Discrete-Time Survival Analysis}
 For hazard and survival calculation in a discrete-time setting, the following formulation from \cite{kvamme_continuous_2019} and earlier \cite{Gensheimer_Narasimhan_2019}<CHECK THIS?> is presented. Let $\mathbb{T} = \{\tau_1, \tau_2, \ldots\ \}$ denote the timestamps, i.e. the indices of the discrete times corresponding to different subjects in the data. The event timestamp is $T*\in\mathbb{T}$. The definitions of PMF and survival function follow as
@@ -158,8 +160,11 @@ As per \cite{Moore_2016}, for an observed event, the pdf is retained. But for a 
 L(t_1 , t_2 , \ldots , t_n) = \prod^{n}_{i=1}f(t_i)^{\delta_i}S(t_i)^{1-\delta_i}=\prod^{n}_{i=1}h(t_i)^{\delta_i}S(t_i)
 \]
 
-\subsection{\label{loss}Loss Function}
-\textbf{The following derivation is taken from \cite{kvamme_continuous_2019}.} For notational convenience, let $\kappa(t) \in \{0, \ldots , m\}$ define the index of the discrete time $t$, meaning $t = \tau_{\kappa(t)}$. Thus, the likelihood contribution for individual $i$ is seen to be 
+\subsection{\label{loss}Loss Function(s)}
+The architecture incorporates two loss functions - one being the negative log likelihood of the data \cite{kvamme_continuous_2019}, another being a lower bound on the concordance index \cite{raykar_cindex}.\\
+
+\textbf{Negative Log-Likelihood - hazard function}\\
+The following derivation is taken from \cite{kvamme_continuous_2019}. For notational convenience, let $\kappa(t) \in \{0, \ldots , m\}$ define the index of the discrete time $t$, meaning $t = \tau_{\kappa(t)}$. Thus, the likelihood contribution for individual $i$ is seen to be 
 
 \begin{align*}
 &L_i = f(t_i)^{\delta_i}S(t_i)^{1-\delta_i}\\
@@ -178,11 +183,34 @@ From here, the loss function for a batch can be constructed as the negative log 
 \end{align*}
 To adjust for varying batch sizes, the mean negative log likelihood is taken as the loss.
 \begin{align*}
-&loss = -\frac{1}{n}\sum^{i=1}_{n}\Bigg(d_i log[h(t_i|x_i)]+(1-d_i)log[1-h(t_i|x_i)]+\\
+&\mathcal{L}_{nll} = -\frac{1}{n}\sum^{i=1}_{n}\Bigg(d_i log[h(t_i|x_i)]+(1-d_i)log[1-h(t_i|x_i)]+\\
 &\sum^{j=1}_{\kappa(t_i)-1}log[1 - h(\tau_j|x_i)] \Bigg) \\
 &= \frac{1}{n}\sum^{n}_{i=1}\sum^{\kappa_{t_i}}_{j=1}(y_{ij}log[h(\tau_j|x_i)]+(1-y_{ij})log[1-h(\tau_j|x_i)])
 \end{align*}
 This can now be minimized by gradient-based methods, thus making it a useful loss function for a neural network to work with. Here, $y_{ij}$ is an indicator variable corresponding to 1 if and only if an event is experienced by the individual $i$ at time $t_j$. Hence, $y$ is a sparse matrix consisting of mostly 0 with 1 only present when the time $t_i$ represents an observed event $d_i = 1$. The loss can be thought of as the negative log likelihood of Bernoulli data $\theta^p(1-\theta)^{1-p}$, where $\theta=h(\tau_j|x_i)$ and $p=y_{ij}$(<noted by Brown 1975>) and can be computed using existing functions in the PyTorch library.\\
+
+\textbf{Lower-Bound on C-Index}\\
+The following loss function is taken from \cite{raykar_cindex}. The sigmoid function defined as $\sigma = (1 + e^{-z})^{-1}$ is an approximation to the indicator function $\mathds{1}_{z>0}$. However, it is not a lower bound. For this, the scaled version of its log is taken.
+\begin{gather*}
+\mathds{1}_{z>0} \ge log\ [2\sigma(z)]/log\ 2\\
+\implies \mathds{1}_{z>0} \ge 1 + (log\ \sigma(z)/log\ 2)
+\end{gather*}
+
+For a more rigourous treatment of this inequality, see the original paper \cite{raykar_cindex}. It follows that the lower bound on the concordance index then becomes
+\begin{gather*}
+c = \frac{1}{|\mathcal{E}|}\sum_{i:C_i = 1}\sum_{T_j > T_i} \mathds{1}_{\eta_j - \eta_i>0}\\
+c \ge \frac{1}{|\mathcal{E}|}\sum_{i:C_i = 1}\sum_{T_j > T_i} 1 +  (log\ \sigma(\eta_j - \eta_i)/log\ 2)
+\end{gather*}
+
+The negative of this lower-bound is chosen to be the loss function, which can therefore be minimized using gradient-based methods (again, with the help of a library like PyTorch).
+\[
+\mathcal{L}_{lbo} = -\frac{1}{|\mathcal{E}|}\sum_{i:C_i = 1}\sum_{T_j > T_i} 1 +  (log\ \sigma(\eta_j - \eta_i)/log\ 2)
+\]
+
+These two loss functions are linearly combined based on a hyperparameter $\alpha \in [0,1]$ to make the total loss
+\[
+\mathcal{L}_{total} = \alpha\mathcal{L}_{nll} + (1 - \alpha)\mathcal{L}_{lbo}
+\]
 
 \subsection{\label{nn_param}Neural Network Parameterization}
 As hazards are conditional probabilities (see Eq. \ref{haz_cond_proba}), they must lie within $[0,1]$. A handy function for this is the sigmoid non-linearity
@@ -250,12 +278,14 @@ Patients' earliest admission time is considered as their `start' date. If their 
 As survival analysis differs from ordinary linear regression in the aspect that not all the survival times are known (right-censoring), there is merit in reviewing the evaluation metrics for this task. The two metrics used in the experimental setup are the time-dependent concordance index (in favour of the regular concordance index) and the Brier score (along with its aggregated version, the integrated Brier score).
 
 \subsection{\label{tdci}Time-Dependent Concordance Index ($td$-concordance index)}
-The C-index, often referred to as ``Harrell's C-Index'' or simply as the C-statistic is a measure of the discriminative capacity of a model. In essence, it is the generalization of the ROC (Receiver Operator Characteristic) curve - AUC in a survival analysis setting <Rephrase??> \cite{Uno_Cai_Pencina_D’Agostino_Wei_2011} \cite{pysurv}.
-
-The formula for the c-index is given as
+The C-index, often referred to as ``Harrell's C-Index'' or simply as the C-statistic is a measure of the discriminative capacity of a model. In essence, it is the generalization of the ROC (Receiver Operator Characteristic) curve - AUC in a survival analysis setting <Rephrase??> \cite{Uno_Cai_Pencina_D’Agostino_Wei_2011} \cite{pysurv}. The formula for the c-index is given as
+%\[
+%C-index = \frac{\sum_{i,j} \mathds{1}_{T_j < T_i}\cdot \mathds{1}_{\eta_j > \eta_i}\cdot d_j}{\sum_{i,j} \mathds{1}_{T_j < T_i}\cdot d_j}
+%\]
 \[
-C-index = \frac{\sum^{i,j} 1_{T_j < T_i}\cdot 1_{\eta_j > \eta_i}\cdot d_j}{\sum^{i,j} 1_{T_j < T_i}\cdot d)j}
+c = \frac{1}{|\mathcal{E}|}\sum_{i:C_i = 1}\sum_{T_j > T_i} \mathds{1}_{\eta_j > \eta_i}
 \]
+where $\eta_i$ denotes the predicted survival time for subject $i$. As c-index is rank-based index, it can be substituted with the survival probability of subject $i$ as well. $|\mathcal{E}|$ is the number of pairs that \textit{can} be compared.\\
 
 It can be interpreted as the fraction of all pairs of subjects whose predicted survival times are correctly ordered among all subjects that can actually be ordered \cite{Pinto_Carvalho_Vinga_2015}. A pair $(i,j)$ is considered `comparable' if the one with the lower observed time is uncensored, that is, when $T_i <T_j$, then $d_i=1$. A pair is considered `concordant' when the model predicts a higher risk for the patient with a lower survival time. Thus, it follows that
 \[ c-index = 
