@@ -1,5 +1,6 @@
 from time_invariant_surv import Time_Invariant_Survival
 from traditional_models import CPH, AFT, RSF
+from nn_models import PYC, DSM
 from general_utils import *
 from model_utils import *
 from losses import *
@@ -27,6 +28,14 @@ def run_fitters():
             'cindex':0 , 
             'ibs':0
             },
+        'pyc':{
+            'cindex':0 , 
+            'ibs':0
+            },
+        'dsm':{
+            'cindex':0 , 
+            'ibs':0
+            }
         }
     # Get configs
     with open(config_file_path, "r") as file:
@@ -40,9 +49,34 @@ def run_fitters():
     with open('../05_preprocessing_emr_data/data/x_val.pickle', 'rb') as file:
         x_val = pickle.load(file)
 
-    # Read the pickled DataFrame
-    with open('../05_preprocessing_emr_data/data/consolidated_pat_tbl.pickle', 'rb') as file:
-        consolidated_pat_tbl = pickle.load(file)
+    #-----------------------------------------------------------------------------------------------
+    # instantiate - PyCox
+    pyc = PYC(configs = configs, train_data = x_train, test_data = x_test, val_data = x_val, num_durations = 10)
+
+    # fit
+    pyc.fit()
+
+    # eval
+    pyc_cindex , pyc_ibs = pyc.eval()
+        
+    # populate corresponding values in eval dict
+    eval_dict['pyc']['cindex'] = pyc_cindex
+    eval_dict['pyc']['ibs'] = pyc_ibs
+
+    #-----------------------------------------------------------------------------------------------
+    # instantiate - Deep Survival Machines
+    dsm = DSM(configs = configs, train_data = x_train, test_data = x_test, val_data = x_val, num_durations = 10)
+
+    # fit
+    dsm.fit()
+
+    # eval
+    dsm_cindex , dsm_ibs = dsm.eval()
+       
+    # populate corresponding values in eval dict
+    eval_dict['dsm']['cindex'] = dsm_cindex
+    eval_dict['dsm']['ibs'] = dsm_ibs
+    
     #-----------------------------------------------------------------------------------------------
     # instantiate - Time Invariant Survival
     tis = Time_Invariant_Survival(
@@ -99,8 +133,10 @@ def run_fitters():
     # populate corresponding values in eval dict
     eval_dict['rsf']['cindex'] = rsf_cindex
     eval_dict['rsf']['ibs'] = rsf_ibs
+    
+    #-----------------------------------------------------------------------------------------------
 
-    return eval_dict    
+    return eval_dict
 
 if __name__ == "__main__":
     eval_dict = run_fitters()

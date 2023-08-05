@@ -9,7 +9,7 @@ from sksurv.ensemble import RandomSurvivalForest
 
 class _traditional_fitter:
     '''
-    simple wrapper class for cox proportional hazards
+    simple wrapper class for traditional and tree-based model(s)
     '''
     def __init__(self , configs , train_data , test_data , val_data):
         self.train_data = train_data
@@ -43,6 +43,9 @@ class _traditional_fitter:
         return cindex , ibs
     
 class CPH(_traditional_fitter):
+    '''
+    simple class for cox proportional hazards model
+    '''
     def __init__(self , configs , train_data , test_data , val_data):
         super(CPH , self).__init__(configs , train_data , test_data , val_data)
 
@@ -57,6 +60,9 @@ class CPH(_traditional_fitter):
         self.fitted = True
 
 class AFT(_traditional_fitter):
+    '''
+    simple class for weibull accelerated failure times model
+    '''
     def __init__(self , configs , train_data , test_data , val_data):
         super(AFT , self).__init__(configs , train_data , test_data , val_data)
 
@@ -74,6 +80,9 @@ class AFT(_traditional_fitter):
         self.fitted = True   
 
 class RSF(_traditional_fitter):
+    '''
+    simple class for random survival forest model
+    '''
     def __init__(self , configs , train_data , test_data , val_data):
         super(RSF , self).__init__(configs , train_data , test_data , val_data)
 
