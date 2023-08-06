@@ -23,7 +23,6 @@ class Time_Invariant_Survival:
         # state vars
         self.clustered = False
         self.fitted = False
-        self.discretized = False
         self.predicted = False
         
         # read from config file
@@ -310,7 +309,8 @@ class Time_Invariant_Survival:
         y_test_dur_ , y_test_event_ = get_target(features)
 
         t_test = Transforms(durations = y_test_dur_)
-        dur_idx_test = t_test.discrete_transform(_cuts = self.q_cuts)
+        dur_idx_test = t_test.discrete_transform(_cuts = self.q_cuts) # although we don't use the dur_idx_test variable,
+        # we actually need the fitted t_test object
 
         # get transparency for graph
         transparency = self.configs['time_invariant']['test_viz']['transparency']
