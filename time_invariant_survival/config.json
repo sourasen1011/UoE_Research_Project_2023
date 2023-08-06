@@ -26,19 +26,20 @@
     },
     "time_variant":{
         "training":{
-            "_clusters":1,
             "q_cuts":15,
             "hidden_size":25,
             "alpha":0.01,
             "batch_size":256,
-            "num_epochs":1000,
+            "num_epochs":100,
             "learning_rate":0.001,
             "shuffle":true,
             "patience":20,
             "dropout":0.5
         },
         "testing":{
-            "mc_iter":100
+            "mc_iter":100,
+            "conf_int_lower":0.05,
+            "conf_int_upper":0.95
         },
         "test_viz":{
             "transparency":0.05
