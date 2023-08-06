@@ -233,7 +233,7 @@ This is a placeholder for the model architecture.
 This paper attempts to model survival functions from both a time-invariant perspective (using mean statistics of covariates) and from a time-variant perspective (using temporal dependencies of covariates <??rephrase>). The latter takes some more preprocessing and a more complex architecture.
 
 \subsection{\label{time_invar_arch}Time-Invariant}
-The simpler time-invariant version of the architecture is a multi-layer perceptron (MLP), otherwise referred to as a fully-connected neural network. Consider a batch of input covariates $x \in \mathbb{R}^{n\times d}$, where $n$ is the batch size and $d$ is the number of input covariates. The basic architecture is as outlines in Table \ref{tab:arch}.\\
+The simpler time-invariant version of the architecture is a multi-layer perceptron (MLP), otherwise referred to as a fully-connected neural network. Consider a batch of input covariates $x \in \mathbb{R}^{n\times d}$, where $n$ is the batch size and $d$ is the number of input covariates. The basic architecture is as outlined in Table \ref{tab:arch1}.\\
 
 \begin{table}[h]
   \centering
@@ -253,16 +253,48 @@ The simpler time-invariant version of the architecture is a multi-layer perceptr
     \hline
   \end{tabular}
   \caption{General Architecture - }
-  \label{tab:arch}
+  \label{tab:arch1}
 \end{table}
 
-Here, $m$ is the output size, denoting the number of discretized time indices across time $max(\mathbb{T})$, while $h$ denotes the number of hidden nodes in the linear layers.
+Here, $m$ is the output size, denoting the number of discretized time indices across time $max(\mathbb{T})$, while $h$ denotes the number of hidden nodes in the linear layers.\\
 
 Optimizer - Nesterov Momentum, Learning Rate scheduler - decay!
 
+\subsection{\label{time_var_arch}Time-Varying}
+First, a patient image is built for each subject in the dataset. Consider a batch of input covariates $x \in \mathbb{R}^{n\times t_s \times d}$, where $t_s$ is the number of time-steps along the subjects' journey(s). $n$ and $d$ retain their meaning from earlier. \\
+
+A convolutional neural network is used to identify patterns in the patient-image, whose outputs are then fed into a fully-connected network. The architecture is elaborated in Table \ref{tab:arch2}
+
+\begin{table}[h]
+  \centering
+  \begin{tabular}{|c|c|}
+    \hline
+    \textbf{Layer Type} & \textbf{Shape/Rate} \\
+    \hline
+    Convolutional (nn.Conv2d) & ($1,14$) \\
+    ReLU (nn.ReLU) & - \\
+    Convolutional (nn.Conv2d) & ($14,7$) \\
+    Flatten (nn.Flatten) & - \\
+    Dense (nn.Linear) & ($fc_i, h$) \\
+    ReLU (nn.ReLU) & - \\
+    Batch Normalization (nn.BatchNorm1d) & $h$ \\
+    Dropout (nn.Dropout) & 0.5 \\ 
+    Dense (nn.Linear) & ($h, h$) \\
+    ReLU (nn.ReLU) & - \\
+    Batch Normalization (nn.BatchNorm1d) & $h$ \\
+    Dropout (nn.Dropout) & 0.5 \\
+    Dense (nn.Linear) & ($h, m$) \\
+    \hline
+  \end{tabular}
+  \caption{General Architecture - }
+  \label{tab:arch2}
+\end{table}
+
 \section{\label{data}Dataset}
-The study uses the large publicly available database MIMIC-IV \cite{mimic_iv}, which consists of critical care data from hospital and ICU admissions for over 40,000 patients admitted to intensive care units at the Beth Israel Deaconess Medical Center (BIDMC). 
+The study uses the large publicly available database MIMIC-IV \cite{mimic_iv}, which consists of critical care data from hospital and ICU admissions for over 40,000 patients admitted to intensive care units at the Beth Israel Deaconess Medical Center (BIDMC).
+
 \subsection{\label{desc}Description}
+For a more thorough treatment of the data, see \href{https://physionet.org/content/mimiciv/2.2/}{MIMIC-IV website}.
 
 \subsection{\label{preprocess}Preprocess}
 To prepare the data, all admissions associated with a Heart Failure ICD-10 code were selected - this forms the base pool of patients. Admission and discharge times are collected along with static covariates such as patients' gender, age and date of death. Patients' ethnicity is collected and grouped into six broad categories - Native, Asian, Black, Hispanic, White and Other. (This goes in footnote - To avoid multi-collinearity issues arising later, the `OTHER' variable is dropped after one-hot encoding)\\
@@ -348,7 +380,10 @@ droutput\_rate = 0.1 & 0.4259 & - \\
 
 
 \section{\label{conc}Conclusions}
-Amongst the neural network models, the architecture is sacrificing calibration for discriminatory power.
+The architecture is sacrificing calibration for discriminatory power.
+
+\section{\label{morework}Further Work}
+Other neural network methods capable of temporal learning (forms of RNN) can be applied to this problem to see if the discriminative power can be increased.
 
 \cite{*}
 
@@ -356,7 +391,7 @@ Amongst the neural network models, the architecture is sacrificing calibration f
 
 \appendix
 
-\section{\label{appdx}Appenidx}
+\section{\label{appdx}Appendix}
 
 Some formal mathematical formulations of the methods used in this paper are elaborated in the following sections
 \subsection{\label{non_param}Non-Parametric Fits}
@@ -364,8 +399,8 @@ The Kaplan Meier fitter
 
 The Nelson Aalen
 
-
-
+\section{\label{perf}Performance Metrics}
+Times of all the fitters.
 
 \end{document}
 %
