@@ -50,76 +50,76 @@ def run_fitters():
         x_val = pickle.load(file)
 
     #-----------------------------------------------------------------------------------------------
-    # instantiate - PyCox
-    pyc = PYC(configs = configs, train_data = x_train, test_data = x_test, val_data = x_val, num_durations = 10)
+    # # instantiate - PyCox
+    # pyc = PYC(configs = configs, train_data = x_train, test_data = x_test, val_data = x_val, num_durations = 10)
 
-    # fit
-    pyc.fit()
+    # # fit
+    # pyc.fit()
 
-    # eval
-    pyc_cindex , pyc_ibs = pyc.eval()
+    # # eval
+    # pyc_cindex , pyc_ibs = pyc.eval()
         
-    # populate corresponding values in eval dict
-    eval_dict['pyc']['cindex'] = pyc_cindex
-    eval_dict['pyc']['ibs'] = pyc_ibs
+    # # populate corresponding values in eval dict
+    # eval_dict['pyc']['cindex'] = pyc_cindex
+    # eval_dict['pyc']['ibs'] = pyc_ibs
 
-    #-----------------------------------------------------------------------------------------------
-    # instantiate - Deep Survival Machines
-    dsm = DSM(configs = configs, train_data = x_train, test_data = x_test, val_data = x_val, num_durations = 10)
+    # #-----------------------------------------------------------------------------------------------
+    # # instantiate - Deep Survival Machines
+    # dsm = DSM(configs = configs, train_data = x_train, test_data = x_test, val_data = x_val, num_durations = 10)
 
-    # fit
-    dsm.fit()
+    # # fit
+    # dsm.fit()
 
-    # eval
-    dsm_cindex , dsm_ibs = dsm.eval()
+    # # eval
+    # dsm_cindex , dsm_ibs = dsm.eval()
        
-    # populate corresponding values in eval dict
-    eval_dict['dsm']['cindex'] = dsm_cindex
-    eval_dict['dsm']['ibs'] = dsm_ibs
+    # # populate corresponding values in eval dict
+    # eval_dict['dsm']['cindex'] = dsm_cindex
+    # eval_dict['dsm']['ibs'] = dsm_ibs
     
-    #-----------------------------------------------------------------------------------------------
-    # instantiate - Time Invariant Survival
-    tis = Time_Invariant_Survival(
-        configs = configs, 
-        train_data = x_train,
-        test_data = x_test, 
-        val_data = x_val
-    )
+    # #-----------------------------------------------------------------------------------------------
+    # # instantiate - Time Invariant Survival
+    # tis = Time_Invariant_Survival(
+    #     configs = configs, 
+    #     train_data = x_train,
+    #     test_data = x_test, 
+    #     val_data = x_val
+    # )
 
-    # fit
-    tis.fit(verbose = True)
-    mean_ , up_ , low_ , y_test_dur , y_test_event = tis.predict() # Visualize -> tis.visualize(mean_ , up_ , low_ , _from = 40 , _to = 50 )
-    tis_cindex , tis_ibs = tis.evaluation(mean_ , y_test_dur , y_test_event, plot = False)
+    # # fit
+    # tis.fit(verbose = True)
+    # mean_ , up_ , low_ , y_test_dur , y_test_event = tis.predict() # Visualize -> tis.visualize(mean_ , up_ , low_ , _from = 40 , _to = 50 )
+    # tis_cindex , tis_ibs = tis.evaluation(mean_ , y_test_dur , y_test_event, plot = False)
     
-    # populate corresponding values in eval dict
-    eval_dict['tis']['cindex'] = tis_cindex
-    eval_dict['tis']['ibs'] = tis_ibs
+    # # populate corresponding values in eval dict
+    # eval_dict['tis']['cindex'] = tis_cindex
+    # eval_dict['tis']['ibs'] = tis_ibs
     
-    #-----------------------------------------------------------------------------------------------
-    # instantiate - CPH
-    cph = CPH(configs = configs, train_data = x_train, test_data = x_test, val_data = x_val)
+    # #-----------------------------------------------------------------------------------------------
+    # # instantiate - CPH
+    # cph = CPH(configs = configs, train_data = x_train, test_data = x_test, val_data = x_val)
 
-    # fit
-    cph.fit()
-    # eval
-    cph_cindex , cph_ibs = cph.eval(fitter_is_rsf = False)
+    # # fit
+    # cph.fit()
+    # # eval
+    # cph_cindex , cph_ibs = cph.eval(fitter_is_rsf = False)
         
-    # populate corresponding values in eval dict
-    eval_dict['cph']['cindex'] = cph_cindex
-    eval_dict['cph']['ibs'] = cph_ibs
+    # # populate corresponding values in eval dict
+    # eval_dict['cph']['cindex'] = cph_cindex
+    # eval_dict['cph']['ibs'] = cph_ibs
 
-    #-----------------------------------------------------------------------------------------------
-    # instantiate - AFT
-    aft = AFT(configs = configs, train_data = x_train, test_data = x_test, val_data = x_val)
+    # #-----------------------------------------------------------------------------------------------
+    # # instantiate - AFT
+    # aft = AFT(configs = configs, train_data = x_train, test_data = x_test, val_data = x_val)
 
-    # fit
-    aft.fit()
-    # eval
-    aft_cindex , aft_ibs = aft.eval(fitter_is_rsf = False)
+    # # fit
+    # aft.fit()
+    # # eval
+    # aft_cindex , aft_ibs = aft.eval(fitter_is_rsf = False)
         
-    # populate corresponding values in eval dict
-    eval_dict['aft']['cindex'] = aft_cindex
-    eval_dict['aft']['ibs'] = aft_ibs
+    # # populate corresponding values in eval dict
+    # eval_dict['aft']['cindex'] = aft_cindex
+    # eval_dict['aft']['ibs'] = aft_ibs
 
     #-----------------------------------------------------------------------------------------------
     # instantiate - RSF
