@@ -390,7 +390,7 @@ A series of experiments were conducted on this data from both a time-invariant a
 
 Next, a range of parametric, semi-parametric, tree-based and neural network-based methods were applied to the data and their evaluation criteria noted. To establish confidence intervals on said criteria, fits were run multiple times - all time-invariant models apart from Cox Proportional Hazards model and Weibull Accelerated Failure Time model were run 20 times. The model allowing for time-varying data was run 10 times. Thus, distributions of their cindex and integrated Brier scores were generated. \\
 
-One of the earlier aims of this study was to see if hybrid deep learning, that is the supplementation of deep learning with classical machine learning techniques would yield better performance compared to traditional techniques. In that light, although methods such as clustering and PCA are introduced into the pipeline, the highest discriminatory power (comparable to traditional methods) is generally observed if the data is directly fed into the neural network(s). The details are listed in Table \ref{tab:eval}.\\
+One of the earlier aims of this study was to see if hybrid deep learning, that is the supplementation of deep learning with classical machine learning techniques would yield better performance compared to traditional techniques. In that light, although methods such as clustering and PCA are introduced into the pipeline, the highest discriminatory power (comparable to traditional methods) is generally observed if the data is directly fed into the neural network(s). The details are listed in Table \ref{tab:eval}. Both metrics are reported as \texttt{Mean (lower 90\% confidence interval, upper 90\% confidence interval)}. It is noted that although the upper bound for the time-invariant method is above that of the traditional statistical fitters (CPH and AFT), its mean is below theirs.
 
 \begin{table*}[t]
   \centering
@@ -398,9 +398,9 @@ One of the earlier aims of this study was to see if hybrid deep learning, that i
      \hline
     \textbf{Model} & \textbf{Hyperparameters} & \textbf{C-Index} & \textbf{IBS} \\
     \hline
-    Cox Proportional Hazards & penalizer = 0.1, step\_size = 0.1 & 0.6953 & \textbf{0.1731}\\
+    Cox Proportional Hazards (CPH) & penalizer = 0.1, step\_size = 0.1 & 0.6953 & \textbf{0.1731}\\
     \hline
-    Weibull AFT & penalizer = 0.01  & 0.6953 & 0.1741\\
+    Weibull Accelerated Failure Times (AFT) & penalizer = 0.01  & 0.6953 & 0.1741\\
     \hline
     Random Survival Forest & n\_estimators=1000, min\_samples\_split=10, min\_samples\_leaf=15, n\_jobs=-1, random\_state=1234, oob\_score = True  & 0.6911 (0.6855, 0.6973) & 0.2013 (0.1998, 0.2024)\\
     \hline
