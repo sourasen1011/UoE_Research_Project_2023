@@ -252,7 +252,7 @@ This study attempts to model survival functions from both a time-invariant persp
 \subsection{\label{time_invar_arch}Time-Invariant}
 The simpler time-invariant version of the architecture is a multi-layer perceptron (MLP), otherwise referred to as a fully-connected neural network. Consider a batch of input covariates $x \in \mathbb{R}^{n\times d}$, where $n$ is the batch size and $d$ is the number of input covariates. The basic architecture is as outlined in Table \ref{tab:arch1}.\\
 
-\begin{table}[h]
+\begin{table}[H]
   \centering
   \begin{tabular}{|c|c|}
     \hline
@@ -281,7 +281,7 @@ Here, $m$ is the output size, denoting the number of discretized time indices ac
 First, a patient image is built for each subject in the dataset. Consider a batch of input covariates $x \in \mathbb{R}^{n\times t_s \times d}$, where $t_s$ is the number of time-steps along the subjects' journey(s). $n$ and $d$ retain their meaning from earlier. \\
 
 A convolutional neural network is used to identify patterns in the patient-image, whose outputs are then fed into a fully-connected network. The architecture is elaborated in Table \ref{tab:arch2}.
-\begin{table}[h]
+\begin{table}[H]
   \centering
   \begin{tabular}{|c|c|}
     \hline
@@ -306,6 +306,7 @@ A convolutional neural network is used to identify patterns in the patient-image
   \caption{General Architecture - Time-Variant}
   \label{tab:arch2}
 \end{table}
+Here, kernel\_size = 3, stride = 1 and padding = 1.
 
 \section{\label{data}Dataset}
 The study uses the large publicly available database MIMIC-IV \cite{mimic_iv}, which consists of critical care data from hospital and ICU admissions for almost 300,000 patients admitted to intensive care units at the Beth Israel Deaconess Medical Center (BIDMC). For a more thorough treatment of the data, see \href{https://physionet.org/content/mimiciv/2.2/}{MIMIC-IV website}.
@@ -328,14 +329,17 @@ Patients' earliest admission time is considered as their `start' date. If their 
 \subsection{\label{censoring}Data Standardization}
 Patients are randomly distributed into train, test and validation pools. Columns with zero variance in the training data are discarded from all three datasets - train, test and validation. Across each pool, their survival time is discretized into $q=15$ buckets or time intervals. For example, a patient whose survival time belongs to the $j^{th}$ bucket has experienced the event (or been censored) between the time interval $[q_j, q_{j+1})\ \forall j \in [1,2,\cdots,m]$.\\
 
-For the time-invariant version, simple pipelines for imputation and scaling are carried out. For the time-varying version, the process is slightly more involved. First, a patient-level cumulative time difference column is introduced, to keep track of when medications or test were administered - for every patient, this column starts with 0. Next, a null mask $\mathcal{M}$ is created.
+For the time-invariant version, simple pipelines for imputation and scaling are carried out. For the time-varying version, the process is slightly more involved. First, a patient-level cumulative time difference column is introduced, to keep track of when medications or test were administered - for every patient, this column starts with 0. \\
 
+Next, a null mask $\mathcal{M}$ is created, as in \cite{deephit}. As neural networks cannot natively handle missing data, the matrices need to be imputed (strategies will be discussed later). However, it can be reductive to ignore the fact that some data is missing in the original dataset. Therefore, a compromise is reached by creating a null mask before imputing the missing values. This null mask is then appended to the dataset before being fed to the neural network. The expectation is for the network to consider imputed values as missing when their corresponding mask element $\mathcal{M}_{idj}=0$, denoting the $j^{th}$ observation of covariate $d$ for patient $i$ is missing.\\
+
+As convolutional neural networks expect input of the same shape, the patient images need to be quantized to have the same width \footnote{This is already done as all the patients have the same number of covariates.} and the same height. The latter is achieved by sampling the multivariate time series data at set points during the patients history. For this study, a patient's history is divided into 10 equal parts, and all their covariates are interpolated over these divisions. Finally each column is normalized as per the L2 norm. Finally, they are reshaped to be fed into a PyTorch CNN model.
 
 \section{\label{metrics}Evaluation Metrics}
 As survival analysis differs from ordinary linear regression in the aspect that not all the survival times are known (right-censoring), there is merit in reviewing the evaluation metrics for this task. The two metrics used in the experimental setup are the time-dependent concordance index (in favour of the regular concordance index) and the Brier score (along with its aggregated version, the integrated Brier score).
 
 \subsection{\label{tdci}Time-Dependent Concordance Index ($td$-concordance index)}
-The C-index, often referred to as ``Harrell's C-Index'' or simply as the C-statistic is a measure of the discriminative capacity of a model. In essence, it is the generalization of the ROC (Receiver Operator Characteristic) curve - AUC in a survival analysis setting <Rephrase??> \cite{Uno_Cai_Pencina_D’Agostino_Wei_2011} \cite{pysurv}. The formula for the c-index is given as
+The C-index, often referred to as `Harrell's C-Index' or simply as the C-statistic is a measure of the discriminative capacity of a model. In essence, it is the generalization of the area under the ROC (Receiver Operator Characteristic) curve in a survival analysis setting \cite{Uno_Cai_Pencina_D’Agostino_Wei_2011} \cite{pysurv}. The formula for the c-index is given as
 %\[
 %C-index = \frac{\sum_{i,j} \mathds{1}_{T_j < T_i}\cdot \mathds{1}_{\eta_j > \eta_i}\cdot d_j}{\sum_{i,j} \mathds{1}_{T_j < T_i}\cdot d_j}
 %\]
@@ -362,54 +366,59 @@ Contrasting the discriminatory power of the C-index, the Brier score provides a 
 BS(t) = \frac{1}{N}\sum^{N}_{i=1}(\mathbb{I}_{T_i>t}-\hat{S}(t, x_i))^2
 \]
 
-With the occurence of right-censored data, the formula needs to be adjusted by the inverse probability of censoring weights method <cite?>. Let $\hat{G}(t) = P[C>t]$ be the estimator of the conditional survival function of the censoring times calculated using the Kaplan-Meier method, where C is the censoring time.
+With the occurence of right-censored data, the formula needs to be adjusted by the inverse probability of censoring weights method \cite{graf_bs}. Let $\hat{G}(t) = P[C>t]$ be the estimator of the conditional survival function of the censoring times calculated using the Kaplan-Meier method, where C is the censoring time.
 
-\begin{gather*}
+\begin{align*}
 BS(t) = \frac{1}{N}\sum^{N}_{i=1}\Bigg(\frac{(0-\hat{S}(t,x_i))^2 \cdot \mathbb{I}_{T_i\le t, d_i = 1}}{\hat{G}(T_i)} +\\
 \frac{(1-\hat{S}(t,x_i))^2 \cdot \mathbb{I}_{T_i > t}}{\hat{G}(t)} \Bigg)
-\end{gather*}
+\end{align*}
 
-An aggregated version of this score provides a simpler (albeit more reductive) summary of the calibration of a model.
+An aggregated version of this score provides a simpler summary of the calibration of a model.
 \[
-IBS(t_{max})= \int^{t_{max}}_{0} BS(t) dt
+IBS(t_{max})= \frac{1}{t_{max}} \int^{t_{max}}_{0} BS(t) dt
 \]
 
 \section{\label{exp}Experiments and Fits}
-A series of experiments were conducted on this data from both a time-invariant and a time-varying perspective. The  survival distributions were examined with non-parametric fitters - Kaplan-Meier fitter and Nelson-Aalen fitter. A short write-up on these methods can be found in the Appendix \ref{appdx}. \\
+A series of experiments were conducted on this data from both a time-invariant and a time-varying perspective. The  survival distributions were first examined with a non-parametric fitter, the Kaplan-Meier fitter \ref{fig:km_curve}. A short write-up on these methods can be found in the Appendix \ref{appdx}. \\
 
-Next, a range of parametric, semi-parametric, tree-based and neural network-based methods were applied to the data and their evaluation criteria noted. To establish confidence intervals on said criteria, fits were run multiple times - all time-invariant models apart from Cox Proportional Hazards model and Weibull Accelerated Failure Time model were run 20 times. The model allowing for time-varying data was run 10 times. Thus, distributions of their cindex and integrated Brier scores were generated. The details are listed in Table \ref{tab:eval}.\\
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.5\textwidth]{km_curve.pdf}
+  \caption{Kaplan-Meier curve of Survival}
+  \label{fig:km_curve}
+\end{figure}
+
+Next, a range of parametric, semi-parametric, tree-based and neural network-based methods were applied to the data and their evaluation criteria noted. To establish confidence intervals on said criteria, fits were run multiple times - all time-invariant models apart from Cox Proportional Hazards model and Weibull Accelerated Failure Time model were run 20 times. The model allowing for time-varying data was run 10 times. Thus, distributions of their cindex and integrated Brier scores were generated. \\
+
+One of the earlier aims of this study was to see if hybrid deep learning, that is the supplementation of deep learning with classical machine learning techniques would yield better performance compared to traditional techniques. In that light, although methods such as clustering and PCA are introduced into the pipeline, the highest discriminatory power (comparable to traditional methods) is generally observed if the data is directly fed into the neural network(s). The details are listed in Table \ref{tab:eval}.\\
 
 \begin{table*}[t]
   \centering
-  \begin{tabular}{|p{4cm}|p{6cm}|p{2cm}|p{2cm}|}
+  \begin{tabular}{|p{4cm}|p{10cm}|p{1.5cm}|p{1.5cm}|}
      \hline
-    \textbf{Model} & \textbf{HyperParameters} & \textbf{C-Index} & \textbf{IBS} \\
+    \textbf{Model} & \textbf{Hyperparameters} & \textbf{C-Index} & \textbf{IBS} \\
     \hline
-    Cox Proportional Hazards & penalizer = 0.1, step\_size = 0.1 & 0.6808 & 0.1685\\
+    Cox Proportional Hazards & penalizer = 0.1, step\_size = 0.1 & 0.6953 & \textbf{0.1731}\\
     \hline
-    Weibull AFT & penalizer = 0.01  & 0.6804 & 0.1748\\
+    Weibull AFT & penalizer = 0.01  & 0.6953 & 0.1741\\
     \hline
-    Random Survival Forest & n\_estimators=1000, min\_samples\_split=10, min\_samples\_leaf=15, n\_jobs=-1, random\_state=1234, oob\_score = True  & 0.6975 & 0.1956\\
+    Random Survival Forest & n\_estimators=1000, min\_samples\_split=10, min\_samples\_leaf=15, n\_jobs=-1, random\_state=1234, oob\_score = True  & 0.6911 (0.6855, 0.6973) & 0.2013 (0.1998, 0.2024)\\
     \hline
-    PyCox (with Logistic Hazard loss function \cite{kvamme_continuous_2019}) & discretization=15, layers=[256,256],  batch\_norm=True, dropout=0.5, batch\_size=256, epochs=500 & 0.5974 & 0.1768\\
+    PyCox (Logistic Hazard loss function \cite{kvamme_continuous_2019}) & discretization=15, layers=[256,256],  batch\_norm=True, dropout=0.5, batch\_size=256, epochs=500 & 0.5984 (0.5723, 0.6104)& 0.1768 (0.1751, 0.1778)\\
     \hline
-    Deep Survival Machhines & k=6, distribution=LogNormal, learning\_rate=1e-3, layers=[100, 100] & 0.6441 & 0.2724\\
+    Deep Survival Machhines & k=6, distribution=LogNormal, learning\_rate=1e-3, layers=[100, 100] & 0.6498 (0.6016, 0.6598) & 0.2739 (0.2651, 0.2834)\\
     \hline
-    DeepSurv & batch\_size=256, num\_epochs=1000, learning\_rate=0.01, patience=50, hidden\_size=100, 
-droutput\_rate = 0.1 & 0.4259 & - \\    
+    Time-Invariant Survival & clusters=1, discretizations = 15, hidden\_size = 25 , alpha = 0.05 , batch\_size=256, num\_epochs=400, learning\_rate=0.001, patience=20, dropout\_rate = 0.5, mc\_iter = 100 & 0.6903 (0.6789, 0.6994) &0.4030 (0.3937, 0.4090) \\
     \hline
-    Time-Invariant Survival & clusters=1, discretizations = 15, hidden\_size = 25 , alpha = 0.05 , batch\_size=256, num\_epochs=400, learning\_rate=0.001, patience=20, dropout\_rate = 0.5, mc\_iter = 100 & - & - \\
-    \hline
-    Time-Variant Survival & discretizations = 15, hidden\_size = 25 , alpha = 0.01 , batch\_size=256, num\_epochs=100, learning\_rate=0.001, patience=20, dropout\_rate = 0.5, mc\_iter = 100  & - & - \\
+    Time-Variant Survival & discretizations = 15, hidden\_size = 25 , alpha = 0.01 , batch\_size=256, num\_epochs=100, learning\_rate=0.001, patience=20, dropout\_rate = 0.5, mc\_iter = 100  & \textbf{0.7301} (0.7263 , 0.7352) & 0.4039 (0.3981, 0.4072)\\
     \hline
   \end{tabular}
-  \caption{Evaluation metrics}
+  \caption{Evaluation metrics - Best metrics are written in \textbf{bold}}
   \label{tab:eval}
 \end{table*}
 
-
 \section{\label{conc}Conclusions}
-The architecture is sacrificing calibration for discriminatory power. The figures \ref{fig:cindex} and \ref{fig:ibs} showcase this situation.
+The architecture is sacrificing calibration for discriminatory power. The Figures \ref{fig:cindex} and \ref{fig:ibs} showcase this situation.
 
 \begin{figure*}[t]
   \centering
@@ -427,7 +436,7 @@ The architecture is sacrificing calibration for discriminatory power. The figure
 \end{figure*}
 
 \section{\label{morework}Further Work}
-Other neural network methods capable of temporal learning (forms of RNN) can be applied to this problem to see if the discriminative power can be increased.
+Neural network methods capable of temporal learning (forms of RNN) can be applied to this problem to see if the discriminative power can be increased. This study has not applied several modern neural network optimizations like Nesterov momentum and learning rate scheduling - further work can focus on these aspects. Deeper architectures may be applied to the problem, however, longer training times may discourage this. This study has used evaluation metrics implemented in \cite{kvamme_continuous_2019}. Currently the time-dependent concordance index calculation appears to take a good amount of time to generate results. This can be a point for further improvement.
 
 \cite{*}
 
@@ -437,13 +446,50 @@ Other neural network methods capable of temporal learning (forms of RNN) can be 
 
 \section{\label{appdx}Appendix}
 
-Some formal mathematical formulations of the methods used in this paper are elaborated in the following sections
-\subsection{\label{non_param}Non-Parametric Fits}
-The Kaplan Meier fitter
+Some formal mathematical formulations of the methods used in this paper are elaborated in the following sections.\\
 
-The Nelson Aalen
+\subsection{\label{non_param}The Kaplan Meier fitter}
 
-MLP
+This estimator, first proposed in \cite{km_curve}, is the product over the failure times of the conditional probabilities of surviving to the next failure time. It is given as
+\[
+\hat{S}(t) = \prod_{t_i \le t}(1 - \hat{q}_i) = \prod_{t_i \le t}(1 - \frac{d_i}{n_i})
+\],
+where $n_i$ is the number of subjects at risk at time $t_i$, and $d_i$ is the number of individuals who fail at that time \cite{Moore_2016}. When plotted, it produces the standard step curve that comes up in all introductory material to survival analysis.
+
+\subsection{\label{non_param}MLP}
+The multi-layer perceptron, arose from the field of psychology, introduced by Rosenblatt in the 1960s \cite{mlp} formed the foundation of neural networks, although later implementation gradually tore away from the biological foundations and now bear only a slight similarity to the functioning of a human brain. For ordinary regression tasks, an input vector $\mathbf{x}$, weight vector $\mathbf{w}$ and bias vector $\mathbf{b}$,
+\[
+\mathbf{x} = \begin{bmatrix}
+x_1 \\
+x_2 \\
+\vdots \\
+x_n
+\end{bmatrix}
+\quad
+\mathbf{w} = \begin{bmatrix}
+w_1 \\
+w_2 \\
+\vdots \\
+w_n
+\end{bmatrix}
+\quad
+\mathbf{b} = \begin{bmatrix}
+b_1 \\
+b_2 \\
+\vdots \\
+b_n
+\end{bmatrix}
+\]
+could be used to estimate a target variable $\mathbf{y}$ as 
+\[
+\mathbf{y} = \sigma(\mathbf{w}^T\mathbf{x}+\mathbf{b})
+\]
+where $\sigma$ is the sigmoid function for logistic regression and just the identity for linear regression. Now, a perceptron without any hidden layers (as was the original) is effectively similar to ordinary regression. With the addition of hidden layers and non-linear activation functions, multi-layer perceptrons become much more powerful. For a network with $\mathbf{L}$ layers, the output of the $i^{th}$ neuron in the $l^{th}$ layer, where $l \in \mathbf{L}$ is given as
+\begin{gather}
+z^{l}_{i} = \mathbf{w}^{T}_{i}\mathbf{a}^{l-1} + \mathbf{b}_i\\
+\mathbf{a}^{l}_i = \sigma^{l}(z^{l}_{i})
+\end{gather}
+where $\mathbf{a}^{l}_{i}$ is the activated (having passed through the activation function) output from the $i^{th}$ neuron in the $l^{th}$ layer. This network is trained iteratively by backpropagating \cite{backprop} errors through the connections over multiple epochs until some reasonable notion of convergence is achieved.\\
 
 CNN
 
@@ -451,11 +497,7 @@ MC dropout
 
 SHAP
 
-\section{\label{perf}Performance Metrics}
-Times of all the fitters.
-
-
-\section{\label{perf}Performance Metrics}
+\section{\label{perf}Code and Reproducibility }
 All relevant code for this study can be found on \href{https://github.com/sourasen1011/UoE_Research_Project_2023/tree/dev}{sourasen1011/UoE\_Research\_Project\_2023/tree/dev}.
 \end{document}
 %
