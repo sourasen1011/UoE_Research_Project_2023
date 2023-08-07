@@ -44,6 +44,7 @@
 \setlength\parindent{0pt} % zero indent
 \renewcommand\thesection{\arabic{section}} % for arabic numerals
 \setcounter{secnumdepth}{3} % for arabic numerals
+\restylefloat{figure}
 
 \begin{document}
 
@@ -137,33 +138,37 @@ Interestingly, this negative of this log-likelihood is used as the loss function
 
 Accelerated failure time models are a popular parametric alternative to the Cox PH model \cite{aft}. They are especially handy in discriminating between groups where the survival times of one can be uniformly shifted backward to forward to get the survival times of another. Unlike Cox PH model, where the baseline hazard is unspecified, AFT models directly model the survival times \cite{aft_2009}.\\
 
-Random Survival Forest models have managed to achieve state-of-the-art performance. At the cost of higher fitting times, they deliver high discriminative power with impressive calibration \cite{rsf}. Building on Breiman's approach in \cite{rf}, this method uses the log-rank test to determine best splits. RSF have a selection bias towards covariates with many possible splits. Improvements towards mitigating this have been made in the form of Conditional Inference Forests which use more nuanced criteria to split nodes, via unbiased recursive partitioning \cite{cit}.\\
+Random Survival Forest models have managed to achieve state-of-the-art performance. At the cost of higher fitting times, they deliver high discriminative power with impressive calibration \cite{rsf}. Building on Breiman's approach in \cite{rf}, this method uses the log-rank test between survival cohorts to determine the best splits. RSF have a selection bias towards covariates with many possible splits or missing values. Improvements towards mitigating this have been made in the form of Conditional Inference Forests which use more nuanced criteria to split nodes, via unbiased recursive partitioning \cite{cit}.
 
 \subsection{\label{setting}Data Setup}
-Before moving to the discrete setting, some formal notation for the data is introduced. The data is assumed to be right-censored. Hence, the data, $\mathcal{D}$ can be represented as a set of tuples $\{(x_i , t_i , d_i)\}_{i=1}^{N}$  \cite{nagpal_deep_2021}. Here, $x_i \in \mathbb{R}^d$ are covariates for patient $i$. $t_i$ is the time of an event or censoring such that $t_i = min(T_i, C_i)$, where $T_i$ and $C_i$ respectively denote the times of event and censoring. A subject is assumed to have either experienced an event or have been censored, but not both. $d_i$ is an indicator that signifies whether $t_i$ is event time or censoring time. $d=1$ for a subject that experiences the event (uncensored) while $d=0$ for a subject that is censored before experiencing the event. More formally, $d= \mathds{1}\{T_i \le C_i\}$. Later in the paper, experiments with time-variant covariates will necessitate the use of a null masking matrix, $\mathcal{M}$ \cite{deephit}.\\
+Before moving to the discrete setting, some formal notation for the data is introduced. The data is assumed to be right-censored (starting times for all subjects are known, but ending times are not). Hence, the data, $\mathcal{D}$ can be represented as a set of tuples $\{(x_i , t_i , d_i)\}_{i=1}^{N}$  \cite{nagpal_deep_2021}. Here, $x_i \in \mathbb{R}^d$ are covariates for patient $i$. $t_i$ is the time of an event or censoring such that $t_i = min(T_i, C_i)$, where $T_i$ and $C_i$ respectively denote the times of event and censoring. A subject is assumed to have either experienced an event or have been censored, but not both. $d_i$ is an indicator that signifies whether $t_i$ is event time or censoring time. $d=1$ for a subject that experiences the event (uncensored) while $d=0$ for a subject that is censored before experiencing the event. More formally, $d= \mathds{1}\{T_i \le C_i\}$. Later in the paper, experiments with time-variant covariates will necessitate the use of a null masking matrix, $\mathcal{M}$ \cite{deephit}.\\
 
 \subsection{\label{discrete}Discrete-Time Survival Analysis}
-For hazard and survival calculation in a discrete-time setting, the following formulation from \cite{kvamme_continuous_2019} and earlier \cite{Gensheimer_Narasimhan_2019}<CHECK THIS?> is presented. Let $\mathbb{T} = \{\tau_1, \tau_2, \ldots\ \}$ denote the timestamps, i.e. the indices of the discrete times corresponding to different subjects in the data. The event timestamp is $T*\in\mathbb{T}$. The definitions of PMF and survival function follow as
+For hazard and survival calculation in a discrete-time setting, the following formulation from \cite{kvamme_continuous_2019} is presented. Let $\mathbb{T} = \{\tau_1, \tau_2, \ldots\ \}$ denote the timestamps, i.e. the indices of the discrete times corresponding to different subjects in the data. The event timestamp is $T*\in\mathbb{T}$. The definitions of PMF and survival function follow as
 \begin{gather*}
 f(\tau_j) = P(T* = \tau_j),\\
 S(\tau_j) = P(T* >\tau_j) = \sum_{k>j}f(\tau_k)
 \end{gather*}
 It can be seen that the hazard at time $\tau_j$ $h(\tau_j)$, is just the probability of an event happening at time $\tau_j$, given the subject has survived till the previous time step $\tau_{j-1}$. 
 \begin{align}
-&h(\tau_j) = P(T* = \tau_j | T* > \tau_{j-1}) = \frac{f(\tau_j)}{S(\tau_{j-1})} \label{haz_cond_proba}\\
-&\implies  h(\tau_j) = \frac{S(\tau_{j-1}) - S(\tau_j)}{S(\tau_{j-1})}\\
-&\implies S(\tau_j) = (1 - h(\tau_j))S(\tau_{j-1})
-\end{align}
-Recursively, the survival function can be parameterized wholly in terms of the hazard function as
-\begin{align}
-S(\tau_j) = \prod_{k=1}^{j}(1 - h(\tau_k)) \label{cum_haz=surv}
+&h(\tau_j) = P(T* = \tau_j | T* > \tau_{j-1}) = \frac{f(\tau_j)}{S(\tau_{j-1})} \label{eq:haz_cond_proba}
 \end{align}
 
-If there were no censoring involved, the likelihood of observing $n$ failures (events) is of the form
+\begin{align*}
+&\implies  h(\tau_j) = \frac{S(\tau_{j-1}) - S(\tau_j)}{S(\tau_{j-1})}\\
+&\implies S(\tau_j) = (1 - h(\tau_j))S(\tau_{j-1})
+\end{align*}
+
+Recursively, the survival function can be parameterized wholly in terms of the hazard function as
+\begin{align}
+S(\tau_j) = \prod_{k=1}^{j}(1 - h(\tau_k)) \label{eq:cum_haz}
+\end{align}
+
+Equation \ref{eq:cum_haz} will be useful in later derivations. Now, coming to likelihoods, if there were no censoring involved, the likelihood of observing $n$ failures (events) is of the form
 \[
 L(t_1 , t_2 , \ldots , t_n) = f(t_1)f(t_2)\ldots f(t_n)=\prod^{n}_{i=1}f(t_i)
 \]
-As per \cite{Moore_2016}, for an observed event, the pdf is retained. But for a right-censored observation, it is replaced by the survival function, as that observation is known only to exceed a particular value. The likelihood then becomes
+As per \cite{Moore_2016}, for an observed event, the pdf is retained. But for a right-censored observation, it is replaced by the survival function, as that subject is known only to have survived past that time. The likelihood then becomes
 \[
 L(t_1 , t_2 , \ldots , t_n) = \prod^{n}_{i=1}f(t_i)^{\delta_i}S(t_i)^{1-\delta_i}=\prod^{n}_{i=1}h(t_i)^{\delta_i}S(t_i)
 \]
@@ -178,24 +183,27 @@ The following derivation is taken from \cite{kvamme_continuous_2019}. For notati
 &L_i = f(t_i)^{\delta_i}S(t_i)^{1-\delta_i}\\
 &= [h(t_i)S(\tau_{\kappa(t_i)-1})]^{d_i}][(1-h(t_i))S(\tau_{\kappa(t_i)-1})]^{1-d_i}\\
 &= h(t_i)^{d_i}[1 - h(t_i)]^{1-d_i}S(\tau_{\kappa(t_i)-1})]\\
-&= h(t_i)^{d_i}[1 - h(t_i)]^{1-d_i} \prod^{j=1}_{\kappa_{t_i-1}}[1 - h(\tau_j)]
+&= h(t_i)^{d_i}[1 - h(t_i)]^{1-d_i} \prod^{\kappa_{t_i-1}}_{j=1}[1 - h(\tau_j)]
 \end{align*}
 For all the individuals, the combined log-likelihood is
 \begin{align*}
-&L = \prod^{n}_{i=1}L_i = \prod^{n}_{i=1}\left(h(t_i)^{d_i}[1 - h(t_i)]^{1-d_i} \prod^{j=1}_{\kappa_{t_i-1}}[1 - h(\tau_j)]\right)
+L = \prod^{n}_{i=1}L_i = \prod^{n}_{i=1}\Bigg(h(t_i|x_i)^{d_i}[1 - h(t_i|x_i)]^{1-d_i} \\
+\prod^{\kappa_{t_i-1}}_{j=1}[1 - h(\tau_j|x_i)]\Bigg)
 \end{align*}
 From here, the loss function for a batch can be constructed as the negative log likelihood.
 \begin{align*}
-&log(L) = \sum^{i=1}_{n}\Bigg(d_i log[h(t_i|x_i)]+(1-d_i)log[1-h(t_i|x_i)]+\\
-&\sum^{\kappa(t_i)-1}_{j=1}log[1 - h(\tau_j|x_i)] \Bigg)
+log(L) = \sum^{n}_{i=1}\Bigg(d_i log[h(t_i|x_i)]+(1-d_i)log[1-h(t_i|x_i)]+\\
+\sum^{\kappa(t_i)-1}_{j=1}log[1 - h(\tau_j|x_i)] \Bigg)
 \end{align*}
 To adjust for varying batch sizes, the mean negative log likelihood is taken as the loss.
 \begin{align*}
-&\mathcal{L}_{nll} = -\frac{1}{n}\sum^{i=1}_{n}\Bigg(d_i log[h(t_i|x_i)]+(1-d_i)log[1-h(t_i|x_i)]+\\
-&\sum^{j=1}_{\kappa(t_i)-1}log[1 - h(\tau_j|x_i)] \Bigg) \\
-&= \frac{1}{n}\sum^{n}_{i=1}\sum^{\kappa_{t_i}}_{j=1}(y_{ij}log[h(\tau_j|x_i)]+(1-y_{ij})log[1-h(\tau_j|x_i)])
+\mathcal{L}_{nll} = -\frac{1}{n}\sum^{n}_{i=1}\Bigg(d_i log[h(t_i|x_i)]+(1-d_i)log[1-h(t_i|x_i)]+\\
+\sum^{j=1}_{\kappa(t_i)-1}log[1 - h(\tau_j|x_i)] \Bigg) \\
+= \frac{1}{n}\sum^{n}_{i=1}\sum^{\kappa_{t_i}}_{j=1}(y_{ij}log[h(\tau_j|x_i)]+(1-y_{ij})log[1-h(\tau_j|x_i)])
 \end{align*}
-This can now be minimized by gradient-based methods, thus making it a useful loss function for a neural network to work with. Here, $y_{ij}$ is an indicator variable corresponding to 1 if and only if an event is experienced by the individual $i$ at time $t_j$. Hence, $y$ is a sparse matrix consisting of mostly 0 with 1 only present when the time $t_i$ represents an observed event $d_i = 1$. The loss can be thought of as the negative log likelihood of Bernoulli data $\theta^p(1-\theta)^{1-p}$, where $\theta=h(\tau_j|x_i)$ and $p=y_{ij}$(<noted by Brown 1975>) and can be computed using existing functions in the PyTorch library.\\
+This can now be minimized by gradient-based methods, thus making it a useful loss function for a neural network to work with. Here, $y_{ij}$ is an indicator variable corresponding to 1 if and only if an event is experienced by the individual $i$ at time $t_j$. Hence, $y$ is a sparse matrix consisting of mostly 0 with 1 only present when the time $t_j$ represents an observed event $d_i = 1$ for individual $x_i$. \\
+
+The loss can be thought of as the negative log likelihood of Bernoulli data $\theta^p(1-\theta)^{1-p}$, where $\theta=h(\tau_j|x_i)$ and $p=y_{ij}$ \cite{bin_x_entropy_brown}, and can be computed using existing functions in the PyTorch library.\\
 
 \textbf{Lower-Bound on C-Index}\\
 The following loss function is taken from \cite{raykar_cindex}. The sigmoid function defined as $\sigma = (1 + e^{-z})^{-1}$ is an approximation to the indicator function $\mathds{1}_{z>0}$. However, it is not a lower bound. For this, the scaled version of its log is taken.
@@ -206,7 +214,7 @@ The following loss function is taken from \cite{raykar_cindex}. The sigmoid func
 
 For a more rigourous treatment of this inequality, see the original paper \cite{raykar_cindex}. It follows that the lower bound on the concordance index then becomes
 \begin{gather*}
-c = \frac{1}{|\mathcal{E}|}\sum_{i:C_i = 1}\sum_{T_j > T_i} \mathds{1}_{\eta_j - \eta_i>0}\\
+c = \frac{1}{|\mathcal{E}|}\sum_{i:C_i = 1}\sum_{T_j > T_i} \mathds{1}_{\eta_j > \eta_i}\\
 c \ge \frac{1}{|\mathcal{E}|}\sum_{i:C_i = 1}\sum_{T_j > T_i} 1 +  (log\ \sigma(\eta_j - \eta_i)/log\ 2)
 \end{gather*}
 
@@ -221,24 +229,25 @@ These two loss functions are linearly combined based on a hyperparameter $\alpha
 \]
 
 \subsection{\label{nn_param}Neural Network Parameterization}
-As hazards are conditional probabilities (see Eq. \ref{haz_cond_proba}), they must lie within $[0,1]$. A handy function for this is the sigmoid non-linearity
+As hazards are conditional probabilities (see Eq. \ref{eq:haz_cond_proba}), they must lie within $[0,1]$. A handy function for this is the sigmoid non-linearity
 \[
 g(x) = \frac{1}{1+e^{-x}}
 \]
-For a neural network taking $x_i$ (the covariates of patient $i$) as input and producing $m$ outputs denoting $m$ discrete timesteps in the patient's journey, applying the sigmoid function effectively transforms the outputs into valid hazard rates.
+For a neural network taking $x_i$ (the covariates of patient $i$) as input and producing $m$ outputs denoting $m$ discrete timesteps in the patient's journey, applying the sigmoid function effectively transforms the outputs into valid hazards.
 \[
 h(\tau_j|x_i) = g(\phi_j(x_i)) = \frac{1}{1+e^{-\phi_j(x_i)}}
 \]
-where $\phi_j(x_i)$ is the output of the neural network at node $j$ corresponding to the hazard function over the time period $[m_{j-1}, m_j)$.\\
+where $\phi_j(x_i)$ is the output of the neural network at node $j$ corresponding to the hazard function over the time period $[\tau_{j-1}, \tau_j)$.\\
 
-Returning to the problem at hand, for such a parameterization, the continuous time scale $\mathbb{T}$ needs to be discretized into $m$ pieces. A simple way to do this is to equally divide up the set $\mathbb{T}$ into $m$ equal parts. The hazards across these $m$ timesteps can be cumulatively multiplied to find the survival function as seen in Eq. \ref{cum_haz=surv}.
+Returning to the problem at hand, for such a parameterization, the continuous time scale $\mathbb{T}$ needs to be discretized into $m$ pieces. A simple way to do this is to equally divide up the set $\mathbb{T}$ into $m$ equal parts. The hazards across these $m$ timesteps can be cumulatively multiplied to find the survival function as seen in Eq. \ref{eq:cum_haz}. 
 
 \section{\label{UQ_explain}Uncertainty Quantification and Explainability}
-An addition this work attempts to make to the above is by introducing a layer of uncertainty quantification via Monte-Carlo dropout \cite{mcdropout}. Dropout is generally reserved for training as a means to enforce regularization on the network. When applied during the testing or prediction phase as well, a probability distribution of the output is created, allowing for probabilistic inference instead of point inference as present in regular neural networks. Being uncertainty-aware ties in with the idea of interpretability of modern deep learning methods, which is often a barrier towards the adoption of such methods into highly regulated industries such as finance or medicine. SHAP (SHapley Additive exPlanations) values \cite{shap}, extended from the field of cooperative game theory provide a unified, model-agnostic method to explain the contributions of covariates to a model's output.
+An addition this work attempts to make to the above is by introducing a layer of uncertainty quantification via Monte-Carlo dropout \cite{mcdropout}. Dropout was originally introduced in 2014 \cite{dropout} as a method to intorduce regularization into neural networks by randomly dropp units along with their connections. This prevents units from co-adapting too much, thereby forcing their neighbours to `learn' the signal in a more `robust' fashion. Dropout is generally reserved for training as a means to enforce regularization on the network. Libraries like PyTorch allow users to prime networks for training or evaluation. When applied during the testing or prediction phase as well, a probability distribution of the output is created, allowing for probabilistic inference instead of point inference as present in regular neural networks. Over many iterations, this essentially means that the network used for prediction is slightly different each time, resulting in slightly different outputs - thereby allowing users to generate a probability distribution of outputs.\\
+
+Being uncertainty-aware ties in with the idea of interpretability of modern deep learning methods, which is often a barrier towards the adoption of such methods into highly regulated industries such as finance or medicine. SHAP (SHapley Additive exPlanations) values \cite{shap}, extended from the field of cooperative game theory provide a unified, model-agnostic method to explain the contributions of covariates to a model's output.
 
 \section{\label{model_arch}Model Architecture}
-This is a placeholder for the model architecture.
-This paper attempts to model survival functions from both a time-invariant perspective (using mean statistics of covariates) and from a time-variant perspective (using temporal dependencies of covariates <??rephrase>). The latter takes some more preprocessing and a more complex architecture.
+This study attempts to model survival functions from both a time-invariant perspective (using means of covariates) and from a time-variant perspective (using historical data for covariates). The latter takes some more preprocessing and requires a slghtly more complex architecture.
 
 \subsection{\label{time_invar_arch}Time-Invariant}
 The simpler time-invariant version of the architecture is a multi-layer perceptron (MLP), otherwise referred to as a fully-connected neural network. Consider a batch of input covariates $x \in \mathbb{R}^{n\times d}$, where $n$ is the batch size and $d$ is the number of input covariates. The basic architecture is as outlined in Table \ref{tab:arch1}.\\
@@ -266,13 +275,12 @@ The simpler time-invariant version of the architecture is a multi-layer perceptr
 
 Here, $m$ is the output size, denoting the number of discretized time indices across time $max(\mathbb{T})$, while $h$ denotes the number of hidden nodes in the linear layers.\\
 
-Optimizer - Nesterov Momentum, Learning Rate scheduler - decay!
+%Optimizer - Nesterov Momentum, Learning Rate scheduler - decay!
 
 \subsection{\label{time_var_arch}Time-Varying}
 First, a patient image is built for each subject in the dataset. Consider a batch of input covariates $x \in \mathbb{R}^{n\times t_s \times d}$, where $t_s$ is the number of time-steps along the subjects' journey(s). $n$ and $d$ retain their meaning from earlier. \\
 
-A convolutional neural network is used to identify patterns in the patient-image, whose outputs are then fed into a fully-connected network. The architecture is elaborated in Table \ref{tab:arch2}
-
+A convolutional neural network is used to identify patterns in the patient-image, whose outputs are then fed into a fully-connected network. The architecture is elaborated in Table \ref{tab:arch2}.
 \begin{table}[h]
   \centering
   \begin{tabular}{|c|c|}
@@ -282,8 +290,9 @@ A convolutional neural network is used to identify patterns in the patient-image
     Convolutional (nn.Conv2d) & ($1,14$) \\
     ReLU (nn.ReLU) & - \\
     Convolutional (nn.Conv2d) & ($14,7$) \\
+    ReLU (nn.ReLU) & - \\
     Flatten (nn.Flatten) & - \\
-    Dense (nn.Linear) & ($fc_i, h$) \\
+    Dense (nn.Linear) & ($fc\footnote{Note that $fc = (7 \times input\_data.shape[2] \times input\_data.shape[3])$}, h$) \\
     ReLU (nn.ReLU) & - \\
     Batch Normalization (nn.BatchNorm1d) & $h$ \\
     Dropout (nn.Dropout) & 0.5 \\ 
@@ -299,20 +308,28 @@ A convolutional neural network is used to identify patterns in the patient-image
 \end{table}
 
 \section{\label{data}Dataset}
-The study uses the large publicly available database MIMIC-IV \cite{mimic_iv}, which consists of critical care data from hospital and ICU admissions for over 40,000 patients admitted to intensive care units at the Beth Israel Deaconess Medical Center (BIDMC).
-
-\subsection{\label{desc}Description}
-For a more thorough treatment of the data, see \href{https://physionet.org/content/mimiciv/2.2/}{MIMIC-IV website}.
+The study uses the large publicly available database MIMIC-IV \cite{mimic_iv}, which consists of critical care data from hospital and ICU admissions for almost 300,000 patients admitted to intensive care units at the Beth Israel Deaconess Medical Center (BIDMC). For a more thorough treatment of the data, see \href{https://physionet.org/content/mimiciv/2.2/}{MIMIC-IV website}.
 
 \subsection{\label{preprocess}Preprocess}
-To prepare the data, all admissions associated with a Heart Failure ICD-10 code were selected - this forms the base pool of patients. Admission and discharge times are collected along with static covariates such as patients' gender, age and date of death. Patients' ethnicity is collected and grouped into six broad categories - Native, Asian, Black, Hispanic, White and Other \footnote{To avoid multi-collinearity issues arising later, the `OTHER' variable is dropped after one-hot encoding}.\\
+To prepare the data, all admissions associated with a Heart Failure ICD-10 code are selected - this formsa the base pool of patients. Admission and discharge times are collected along with static covariates such as patients' gender, age and date of death. Patients' ethnicity is collected and grouped into six broad categories - Native, Asian, Black, Hispanic, White and Other \footnote{To avoid multi-collinearity issues arising later, the `OTHER' variable is dropped after one-hot encoding. Similary, `F' variable corresponding to gender (female) is also dropped after one-hot encoding.}.\\
 
-Time-variant records such as BMI, Weight and Height are collected from Online Medical Records (OMR). Such records have an associated chart-time or chart-date, denoting when they were collected. Lab tests corresponding to cholesterol, sodium intake, lymphocyte count and hemoglobin levels <CITE!? Why just these?>. Medication administered from the classes of angiotensin-converting enzyme blockers, angiotensin receptor blockers, calcium channel blockers and beta blockers are also taken as features/ covariates. Vital signs such as temperature, heartrate, respiratory rate, $O_2$ saturation, systolic and diastolic blood pressure are also taken. Patients who have at least  one record for all of the above 4 datasets (OMR, lab test, medication and vital signs) are retained.\\
-
-Patients are randomly distributed into train, test and validation pools. Across each pool, their survival time is discretized into $q=15$ buckets or time intervals, with $m_i=j$ denoting that the $i^{th}$ patient experienced an event or was censored over the $m^{th}$ time interval.
+Time-variant records such as BMI, Weight and Height are collected from Online Medical Records (OMR). Such records have an associated chart-time or chart-date, denoting when they were collected. Lab tests corresponding to cholesterol, sodium intake, lymphocyte count and hemoglobin levels were considered. Medication administered from the classes of angiotensin-converting enzyme blockers, angiotensin receptor blockers, calcium channel blockers and beta blockers are also taken as features. Vital signs such as temperature, heartrate, respiratory rate, $O_2$ saturation, systolic and diastolic blood pressure are also taken. Patients who have at least one record for all of the above datasets (OMR, lab test, medication and vital signs) are retained. For the time-varying version, the time difference between each subsequent observation is noted. Only patients who have at least 10 distinct time steps are retained. This of course, brings down the number of patients slightly as compared to the time-invariant version.
 
 \subsection{\label{censoring}Censoring}
-Patients' earliest admission time is considered as their `start' date. If their death date is not captured in the data <add footnote here>, their last known discharge time is known as their `end' date - these patients are considered to be censored. Otherwise, their date of death is taken to be the `end' date - these are the uncensored patients. The distribution of event/censoring times is quite similar across both censored and uncensored cohorts <Add image of histogram>. Standard pipelines for dummy-encoding, train-test-validation splitting, imputation and scaling are carried out. Columns with zero variance in the training data are discarded from all three datasets - train, test and validation.
+Patients' earliest admission time is considered as their `start' date. If their death date is not captured in the data \footnote{Out-of-hospital mortality is captured from state records. If the individual survived for at least one year after their last hospital discharge, then the death date will have a NULL value.}, their last known discharge time is known as their `end' date - these patients are considered to be censored. Otherwise, their date of death is taken to be the `end' date - these are the uncensored patients. The distribution of event/censoring times is quite similar across both censored and uncensored cohorts - see Figure \ref{fig:cohort_hist}.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.5\textwidth]{cohort_hist.pdf}
+  \caption{Cohort-wise Histogram}
+  \label{fig:cohort_hist}
+\end{figure}
+
+\subsection{\label{censoring}Data Standardization}
+Patients are randomly distributed into train, test and validation pools. Columns with zero variance in the training data are discarded from all three datasets - train, test and validation. Across each pool, their survival time is discretized into $q=15$ buckets or time intervals. For example, a patient whose survival time belongs to the $j^{th}$ bucket has experienced the event (or been censored) between the time interval $[q_j, q_{j+1})\ \forall j \in [1,2,\cdots,m]$.\\
+
+For the time-invariant version, simple pipelines for imputation and scaling are carried out. For the time-varying version, the process is slightly more involved. First, a patient-level cumulative time difference column is introduced, to keep track of when medications or test were administered - for every patient, this column starts with 0. Next, a null mask $\mathcal{M}$ is created.
+
 
 \section{\label{metrics}Evaluation Metrics}
 As survival analysis differs from ordinary linear regression in the aspect that not all the survival times are known (right-censoring), there is merit in reviewing the evaluation metrics for this task. The two metrics used in the experimental setup are the time-dependent concordance index (in favour of the regular concordance index) and the Brier score (along with its aggregated version, the integrated Brier score).
@@ -362,7 +379,7 @@ A series of experiments were conducted on this data from both a time-invariant a
 
 Next, a range of parametric, semi-parametric, tree-based and neural network-based methods were applied to the data and their evaluation criteria noted. To establish confidence intervals on said criteria, fits were run multiple times - all time-invariant models apart from Cox Proportional Hazards model and Weibull Accelerated Failure Time model were run 20 times. The model allowing for time-varying data was run 10 times. Thus, distributions of their cindex and integrated Brier scores were generated. The details are listed in Table \ref{tab:eval}.\\
 
-\begin{table*}[h]
+\begin{table*}[t]
   \centering
   \begin{tabular}{|p{4cm}|p{6cm}|p{2cm}|p{2cm}|}
      \hline
@@ -394,7 +411,7 @@ droutput\_rate = 0.1 & 0.4259 & - \\
 \section{\label{conc}Conclusions}
 The architecture is sacrificing calibration for discriminatory power. The figures \ref{fig:cindex} and \ref{fig:ibs} showcase this situation.
 
-\begin{figure*}[h]
+\begin{figure*}[t]
   \centering
   \includegraphics[width=\textwidth]{cindex_score_dist_plot.pdf}
   \caption{Distribution of C-index}
@@ -402,7 +419,7 @@ The architecture is sacrificing calibration for discriminatory power. The figure
 \end{figure*}
 
 
-\begin{figure*}[h]
+\begin{figure*}[t]
   \centering
   \includegraphics[width=\textwidth]{ibs_score_dist_plot.pdf}
   \caption{Distribution of IBS}
@@ -425,6 +442,14 @@ Some formal mathematical formulations of the methods used in this paper are elab
 The Kaplan Meier fitter
 
 The Nelson Aalen
+
+MLP
+
+CNN
+
+MC dropout
+
+SHAP
 
 \section{\label{perf}Performance Metrics}
 Times of all the fitters.
