@@ -52,5 +52,5 @@ class Transforms:
         self.duration_index = np.searchsorted(a = self.bin_edges , v = self.durations)
         self.n_duration_index = self.duration_index.max()+1
         # print(f'n_duration_index {self.n_duration_index} , _cuts: {_cuts}')
-        assert self.n_duration_index == _cuts , 'must match'
+        assert self.n_duration_index == _cuts , 'must match. we have self.n_duration_index , {self.n_duration_index} != _cuts {_cuts}'
         return self.duration_index

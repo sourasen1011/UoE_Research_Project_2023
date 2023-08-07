@@ -74,6 +74,14 @@ def plot_with_cf(bin_edges , mean_ , low_ , up_ , _from , _to = None , transpare
         m , l , u = mean_[_from] , low_[_from] , up_[_from]
         plt.step(bin_edges , m , where = 'post' , label = 'mean');
         plt.fill_between(bin_edges , l , u , step = 'post' , alpha = transparency , label = 'confint');
+    
+    plt.xlabel('Time')
+    plt.ylabel('Survival Probability')
+    
+    # Save the plot as an SVG file
+    plt.savefig('graph.pdf', format='pdf')
+
+    plt.show();
 
 def get_target(df):
     '''
