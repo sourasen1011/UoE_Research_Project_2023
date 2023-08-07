@@ -390,7 +390,66 @@ A series of experiments were conducted on this data from both a time-invariant a
 
 Next, a range of parametric, semi-parametric, tree-based and neural network-based methods were applied to the data and their evaluation criteria noted. To establish confidence intervals on said criteria, fits were run multiple times - all time-invariant models apart from Cox Proportional Hazards model and Weibull Accelerated Failure Time model were run 20 times. The model allowing for time-varying data was run 10 times. Thus, distributions of their cindex and integrated Brier scores were generated. \\
 
-One of the earlier aims of this study was to see if hybrid deep learning, that is the supplementation of deep learning with classical machine learning techniques would yield better performance compared to traditional techniques. In that light, although methods such as clustering and PCA are introduced into the pipeline, the highest discriminatory power (comparable to traditional methods) is generally observed if the data is directly fed into the neural network(s). The details are listed in Table \ref{tab:eval}. Both metrics are reported as \texttt{Mean (lower 90\% confidence interval, upper 90\% confidence interval)}. It is noted that although the upper bound for the time-invariant method is above that of the traditional statistical fitters (CPH and AFT), its mean is below theirs.
+One of the earlier aims of this study was to see if hybrid deep learning, that is the supplementation of deep learning with classical machine learning techniques would yield better performance compared to traditional techniques. In that light, although methods such as clustering and PCA are introduced into the pipeline, the highest discriminatory power (comparable to traditional methods) is generally observed if the data is directly fed into the neural network(s). Due to this shortcoming, the time-variant version has not been equipped with any clustering utility as opposed to its time-invariant counterpart. Some tests were carried out to see the effect of having multiple clusters \footnote{Note these metrics were collected on one specific run. Reruns may yield slightly different results} and preprocessing the data with PCA. Details are in Table \ref{tab:eval_degrad}.
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{|p{2cm}|p{3cm}|p{1.4cm}|p{1cm}|}
+     \hline
+    \textbf{Extension} & \textbf{Hyperparameters} & \textbf{C-Index} & \textbf{IBS} \\
+    \hline
+    Clustering & clusters = 1 & 0.6957 & 0.3995 \\
+    \hline
+    Clustering & clusters = 2 & 0.6857 & 0.4075 \\
+    \hline
+    Clustering & clusters = 3 & 0.6786 & 0.3915 \\
+    \hline
+    Clustering & clusters = 4 & 0.6724 & 0.4108 \\
+    \hline
+    Clustering & clusters = 5 & 0.6703 & 0.4141 \\
+    \hline
+    PCA & n\_components = 1 & 0.4891 & 0.4147\\
+    \hline
+    PCA & n\_components = 2 & 0.5071 & 0.4127\\
+    \hline
+    PCA & n\_components = 5 & 0.4927 &  0.4133\\
+    \hline
+    PCA & n\_components = 10 & 0.4826 & 0.4049\\
+    \hline
+    Clustering \& PCA & clusters = 2 , n\_components = 2& 0.5103 & 0.4131\\
+    \hline
+  \end{tabular}
+  \caption{Evaluation metrics - Degradation with extensions}
+  \label{tab:eval_degrad}
+\end{table}
+
+The details of experiments comparing the two architectures with other off-the-shelf methods are listed in Table \ref{tab:eval}. Both metrics are reported as \texttt{Mean (lower 90\% confidence interval, upper 90\% confidence interval)}. It is noted that although the upper bound for the time-invariant method is above that of the traditional statistical fitters (CPH and AFT), its mean is below theirs. The time-variant counterpart seems to comfortably beat all other methods in terms of c-index (discriminative power) but both methods have quite a large Brier score (calibration) in comparison to off-the-shelf methods. The Figures \ref{fig:cindex} and \ref{fig:ibs} showcase this situation.\\
+
+
+\begin{figure*}[h]
+  \centering
+  \includegraphics[width=\textwidth]{cindex_score_dist_plot.pdf}
+  \caption{Distribution of C-index}
+  \label{fig:cindex}
+\end{figure*}
+
+
+\begin{figure*}[h]
+  \centering
+  \includegraphics[width=\textwidth]{ibs_score_dist_plot.pdf}
+  \caption{Distribution of IBS}
+  \label{fig:ibs}
+\end{figure*}
+
+
+A novel offering of this architecture comes from applying Monte-Carlo dropout. For any particular subject, the returned survival curve natively has confidence bands associated with it. An example is shown in Figure \ref{fig:example_survival_graph}.
+
+\begin{figure*}[h]
+  \centering
+  \includegraphics[width=0.5\textwidth]{example_survival_graph.pdf}
+  \caption{Survival Curve with 90\% confidence intervals}
+  \label{fig:example_survival_graph}
+\end{figure*}
 
 \begin{table*}[t]
   \centering
@@ -417,36 +476,17 @@ One of the earlier aims of this study was to see if hybrid deep learning, that i
   \label{tab:eval}
 \end{table*}
 
-\section{\label{conc}Conclusions}
-The architecture is sacrificing calibration for discriminatory power. The Figures \ref{fig:cindex} and \ref{fig:ibs} showcase this situation.
-
-\begin{figure*}[t]
-  \centering
-  \includegraphics[width=\textwidth]{cindex_score_dist_plot.pdf}
-  \caption{Distribution of C-index}
-  \label{fig:cindex}
-\end{figure*}
-
-
-\begin{figure*}[t]
-  \centering
-  \includegraphics[width=\textwidth]{ibs_score_dist_plot.pdf}
-  \caption{Distribution of IBS}
-  \label{fig:ibs}
-\end{figure*}
+%\section{\label{conc}Discussions}
+%The architecture is sacrificing calibration for discriminatory power. The Figures \ref{fig:cindex} and \ref{fig:ibs} showcase this situation.
 
 \section{\label{morework}Further Work}
-Neural network methods capable of temporal learning (forms of RNN) can be applied to this problem to see if the discriminative power can be increased. This study has not applied several modern neural network optimizations like Nesterov momentum and learning rate scheduling - further work can focus on these aspects. Deeper architectures may be applied to the problem, however, longer training times may discourage this. This study has used evaluation metrics implemented in \cite{kvamme_continuous_2019}. Currently the time-dependent concordance index calculation appears to take a good amount of time to generate results. This can be a point for further improvement.
-
-\cite{*}
-
-\bibliography{references}% Produces the bibliography via BibTeX.
+Neural network methods capable of temporal learning (forms of RNN) can be applied to this problem to see if the discriminative power can be increased. This study has not applied several modern neural network optimizations like Nesterov momentum and learning rate scheduling - further work can focus on these aspects. Deeper architectures may be applied to the problem, however, longer training times may discourage this. This study has used evaluation metrics implemented in \cite{kvamme_continuous_2019}. Currently the time-dependent concordance index calculation appears to take a good amount of time to generate results. This can be a point for further improvement. In future, if the clustering utility is investigated in more detail, one might find that some parts of the code break due to the random initialization of clusters sometimes producing cohorts whose duration indices do not match the number of requested discretizations. This is a bug and may warrant investigation.
 
 \appendix
 
 \section{\label{appdx}Appendix}
 
-Some formal mathematical formulations of the methods used in this paper are elaborated in the following sections.\\
+Some formal mathematical formulations of the methods used in this paper are elaborated in the following sections.
 
 \subsection{\label{non_param}The Kaplan Meier fitter}
 
@@ -456,7 +496,7 @@ This estimator, first proposed in \cite{km_curve}, is the product over the failu
 \],
 where $n_i$ is the number of subjects at risk at time $t_i$, and $d_i$ is the number of individuals who fail at that time \cite{Moore_2016}. When plotted, it produces the standard step curve that comes up in all introductory material to survival analysis.
 
-\subsection{\label{non_param}MLP}
+\subsection{\label{non_param}Multi Layer Perceptron}
 The multi-layer perceptron, arose from the field of psychology, introduced by Rosenblatt in the 1960s \cite{mlp} formed the foundation of neural networks, although later implementation gradually tore away from the biological foundations and now bear only a slight similarity to the functioning of a human brain. For ordinary regression tasks, an input vector $\mathbf{x}$, weight vector $\mathbf{w}$ and bias vector $\mathbf{b}$,
 \[
 \mathbf{x} = \begin{bmatrix}
@@ -491,14 +531,21 @@ z^{l}_{i} = \mathbf{w}^{T}_{i}\mathbf{a}^{l-1} + \mathbf{b}_i\\
 \end{gather}
 where $\mathbf{a}^{l}_{i}$ is the activated (having passed through the activation function) output from the $i^{th}$ neuron in the $l^{th}$ layer. This network is trained iteratively by backpropagating \cite{backprop} errors through the connections over multiple epochs until some reasonable notion of convergence is achieved.\\
 
-CNN
+%CNN
 
-MC dropout
+%MC dropout
 
-SHAP
+%SHAP
 
 \section{\label{perf}Code and Reproducibility }
 All relevant code for this study can be found on \href{https://github.com/sourasen1011/UoE_Research_Project_2023/tree/dev}{sourasen1011/UoE\_Research\_Project\_2023/tree/dev}.
+
+
+\cite{*}
+
+\bibliography{references}% Produces the bibliography via BibTeX.
+
+
 \end{document}
 %
 % ****** End of file apssamp.tex ******
