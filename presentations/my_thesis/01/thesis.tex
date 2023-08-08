@@ -441,18 +441,7 @@ The details of experiments comparing the two architectures with other off-the-sh
   \label{fig:ibs}
 \end{figure*}
 
-
-This architecture generates confidence intervals by applying Monte-Carlo dropout. For any particular subject, the returned survival curve natively has confidence bands associated with it. An example is shown in Figure \ref{fig:example_survival_graph}.
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=0.5\textwidth]{example_survival_graph.pdf}
-  \caption{Survival Curve for single subject with 90\% confidence intervals}
-  \label{fig:example_survival_graph}
-\end{figure}
-
-Further, it is also equipped with a wrapper for the Python library \texttt{shap} which allows explanation of particular observations. Figure \ref{fig:shap} shows the breakdown for one patient over a particular discrete time period.
-
+This implementation is equipped with a wrapper for the Python library \texttt{shap} which allows explanation of particular observations. Figure \ref{fig:shap} shows the breakdown for one patient over a particular discrete time period. 
 
 \begin{figure*}
   \centering
@@ -461,6 +450,33 @@ Further, it is also equipped with a wrapper for the Python library \texttt{shap}
   \label{fig:shap}
 \end{figure*}
 
+SHAP allows the introduction of a notion of an `expected' \footnote{In the literature, expected survival generally refers to the mean or median survival time and not a time-varying metric. Here the word is used differently} survival curve, which can be compared against baseline survival of traditional fitters and the empirical survival distribution from non-parametric fitters such as the Kaplan-Meier fitter. Figure \ref{fig:comparing_surv_curve} shows this.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.4\textwidth]{comparing_surv_curve.pdf}
+  \caption{Comparison of expected survival curve against baseline survival and empirical survival}
+  \label{fig:comparing_surv_curve}
+\end{figure}
+
+This leads to the question of statistical similarity of the curves thus generated. The Kolmogorv-Smirnov test \cite{ks_test_lilliefors} is used to test for this, with the null hypothesis being that the curves are `similar', i.e. the generating process for both the curves is the same. As standard, two critical values of 0.01 and 0.05 are chosen. It is seen that the p-value for the test between CPH and the neural network is above 0.05; therefore the null hypothesis cannot be rejected and it follows that the baseline survival from a traditional fitter such as Cox Proportional Hazards is statistically similar to the `expected' survival generated from the NN\footnote{Refers to the expected survival curve generated from the time-invariant neural network in this study}. The case for comparison with the empirical distribution is more of an edge case, allowing rejection of the null hypothesis at critical value of 0.05 but not at 0.01.\\
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{|c|c|c|c|}
+  \hline
+  \textbf{p-values}&\textbf{CPH}&\textbf{KM}&\textbf{NN}\\
+  \hline
+  \textbf{CPH}&-&0.0019&0.1877\\
+  \hline
+  \textbf{KM}&-&-&0.0461\\
+  \hline
+  \end{tabular}
+  \caption{Results of KS test}
+  \label{tab:kstest}
+\end{table}
+
+From here, it may be natural to want to investigate the factors that deviate an individual subject's survival (at any particular timestep) from the `expected' survival at that time.
 \begin{table*}
   \centering
   \begin{tabular}{|p{4cm}|p{10cm}|p{1.5cm}|p{1.5cm}|}
@@ -485,6 +501,16 @@ Further, it is also equipped with a wrapper for the Python library \texttt{shap}
   \caption{Evaluation metrics - Best metrics are written in \textbf{bold}}
   \label{tab:eval}
 \end{table*}
+
+
+Furthermore, this implementation generates confidence intervals by applying Monte-Carlo dropout. For any particular subject, the returned survival curve natively has confidence bands associated with it. An example is shown in Figure \ref{fig:example_survival_graph}.\\
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.4\textwidth]{example_survival_graph.pdf}
+  \caption{Survival Curve for single subject with 90\% confidence intervals}
+  \label{fig:example_survival_graph}
+\end{figure}
 
 %\section{\label{conc}Discussions}
 %The architecture is sacrificing calibration for discriminatory power. The Figures \ref{fig:cindex} and \ref{fig:ibs} showcase this situation.

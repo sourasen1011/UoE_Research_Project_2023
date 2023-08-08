@@ -81,7 +81,7 @@ def plot_with_cf(bin_edges , mean_ , low_ , up_ , _from , _to = None , transpare
     # Save the plot as an SVG file
     plt.savefig('graph.pdf', format='pdf')
 
-    plt.show();
+    # plt.show();
 
 def get_target(df):
     '''
