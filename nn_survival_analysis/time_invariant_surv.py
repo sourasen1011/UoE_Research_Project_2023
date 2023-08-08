@@ -24,6 +24,7 @@ class Time_Invariant_Survival:
         self.clustered = False
         self.fitted = False
         self.predicted = False
+        self.explained = False
         
         # read from config file
         self._clusters = self.configs['time_invariant']['training']['clusters'] # Specify the number of clusters (K)
@@ -344,4 +345,71 @@ class Time_Invariant_Survival:
         # print(f'integrated brier score {ibs}')
         
         return tdci , ibs
-#________________________________________________________________________________________________
+    
+    def explain_with_shap(self , cluster:int = 0 , background_size:int = 500 , explained_size:int = 100) -> None:
+        '''
+        explanation function with SHAP
+        Lundberg, Scott, and Su-In Lee. 2017. “A Unified Approach to Interpreting Model Predictions.” arXiv. http://arxiv.org/abs/1705.07874.
+        cluster: cluster to be explained
+        background_size: how many subjects of training cluster go into background
+        explained_size: how many subjects of testing cluster are to be explained
+        t_s: time_step to be explained. must be within q_cuts
+        pat_num: patient whose outputs are to be explained. must be within explained_size
+        '''
+        if not self.fitted:
+            raise Exception("Model isn't fitted yet!")
+        
+        x_train_grouped = self.cluster_train()
+        x_test_grouped = self.cluster_other(self.test_data)
+
+        # Get model
+        net = self.nets[cluster][0]
+
+        # prepare background data
+        background = x_train_grouped.get_group(cluster)
+        background = torch.Tensor(background.iloc[:background_size , :-2].to_numpy())
+
+        # prepare viz data
+        testing_data = x_test_grouped.get_group(cluster)
+        testing_data = torch.Tensor(testing_data.iloc[:explained_size , :-2].to_numpy()) # curtail  features column
+
+        # explain
+        explainer = shap.DeepExplainer(net , background)
+        shap_values = np.array(explainer.shap_values(testing_data))
+
+        # store explanations
+        self.shap_utils = (explainer , shap_values)
+
+        # change state_var
+        self.explained = True
+
+    def plot_explain(self , plot_type:str , cluster:int = 0 , t_s:int = 0 , pat_num:int = 0):
+        '''
+        plots of SHAP values
+        '''
+        if not self.explained:
+            raise Exception('not explained yet. run object.explain_with_shap first.')
+        
+        x_test_grouped = self.cluster_other(self.test_data)
+
+        # unpack
+        explainer , shap_values = self.shap_utils
+
+        # plot the SHAP values for the 't_s'^{th} time step for the subject number 'pat' - this yields explanation for discrete hazards
+        if plot_type == 'force':
+            shap.initjs() # init js env??
+            shap.force_plot(
+                explainer.expected_value[t_s], 
+                shap_values[t_s][pat_num,:], 
+                x_test_grouped.get_group(cluster).iloc[pat_num,:-2] , 
+                link = 'logit'
+            )
+        elif plot_type == 'waterfall':
+            shap.plots._waterfall.waterfall_legacy(
+                explainer.expected_value[t_s], 
+                shap_values[t_s][pat_num,:], 
+                feature_names = x_test_grouped.get_group(cluster).iloc[:,:-2].columns
+                )
+        else:
+            raise NotImplementedError('not implemented yet')
+    #________________________________________________________________________________________________
