@@ -429,7 +429,7 @@ The details of experiments comparing the two architectures with other off-the-sh
 \begin{figure*}[h]
   \centering
   \includegraphics[width=\textwidth]{cindex_score_dist_plot.pdf}
-  \caption{Distribution of C-index}
+  \caption{Distribution of C-index - Time-Variant version run for 10 iterations. All others run for 20 iterations.}
   \label{fig:cindex}
 \end{figure*}
 
@@ -437,19 +437,19 @@ The details of experiments comparing the two architectures with other off-the-sh
 \begin{figure*}[h]
   \centering
   \includegraphics[width=\textwidth]{ibs_score_dist_plot.pdf}
-  \caption{Distribution of IBS}
+  \caption{Distribution of IBS - Time-Variant version run for 10 iterations. All others run for 20 iterations.}
   \label{fig:ibs}
 \end{figure*}
 
 
 A novel offering of this architecture comes from applying Monte-Carlo dropout. For any particular subject, the returned survival curve natively has confidence bands associated with it. An example is shown in Figure \ref{fig:example_survival_graph}.
 
-\begin{figure*}[h]
+\begin{figure}[H]
   \centering
   \includegraphics[width=0.5\textwidth]{example_survival_graph.pdf}
-  \caption{Survival Curve with 90\% confidence intervals}
+  \caption{Survival Curve for single subject with 90\% confidence intervals}
   \label{fig:example_survival_graph}
-\end{figure*}
+\end{figure}
 
 \begin{table*}[t]
   \centering
@@ -480,7 +480,9 @@ A novel offering of this architecture comes from applying Monte-Carlo dropout. F
 %The architecture is sacrificing calibration for discriminatory power. The Figures \ref{fig:cindex} and \ref{fig:ibs} showcase this situation.
 
 \section{\label{morework}Further Work}
-Neural network methods capable of temporal learning (forms of RNN) can be applied to this problem to see if the discriminative power can be increased. This study has not applied several modern neural network optimizations like Nesterov momentum and learning rate scheduling - further work can focus on these aspects. Deeper architectures may be applied to the problem, however, longer training times may discourage this. This study has used evaluation metrics implemented in \cite{kvamme_continuous_2019}. Currently the time-dependent concordance index calculation appears to take a good amount of time to generate results. This can be a point for further improvement. In future, if the clustering utility is investigated in more detail, one might find that some parts of the code break due to the random initialization of clusters sometimes producing cohorts whose duration indices do not match the number of requested discretizations. This is a bug and may warrant investigation. For evaluation criteria, another metric popular in the survival analysis literature is cumulative dynamic AUC \cite{cum_dyn_auc}.
+Neural network methods capable of temporal learning (forms of RNN) can be applied to this problem to see if the discriminative power can be increased. This study has not applied several modern neural network optimizations like Nesterov momentum and learning rate scheduling - further work can focus on these aspects. Deeper architectures may be applied to the problem, however, longer training times may discourage this. This study has used evaluation metrics implemented in \cite{kvamme_continuous_2019}. Currently the time-dependent concordance index calculation appears to take a good amount of time to generate results. This can be a point for further improvement. From a modularization perspective, classes for Time-Invariant and Time-Variant processes are completely separate at the moment. Perhaps later they can inherit common functionalities from a parent class.\\
+
+In future, if the clustering utility is investigated in more detail, one might find that some parts of the code break due to the random initialization of clusters sometimes producing cohorts whose duration indices do not match the number of requested discretizations. This is a bug and may warrant investigation. For evaluation criteria, another popular metric in the survival analysis literature is cumulative dynamic AUC \cite{cum_dyn_auc}. Future iterations can focus on this metric along with the two others mentioned in this study to see if it yields a different assessment of the models' suitability.
 
 \appendix
 
@@ -497,7 +499,7 @@ This estimator, first proposed in \cite{km_curve}, is the product over the failu
 where $n_i$ is the number of subjects at risk at time $t_i$, and $d_i$ is the number of individuals who fail at that time \cite{Moore_2016}. When plotted, it produces the standard step curve that comes up in all introductory material to survival analysis.
 
 \subsection{\label{non_param}Multi Layer Perceptron}
-The multi-layer perceptron, arose from the field of psychology, introduced by Rosenblatt in the 1960s \cite{mlp} formed the foundation of neural networks, although later implementation gradually tore away from the biological foundations and now bear only a slight similarity to the functioning of a human brain. For ordinary regression tasks, an input vector $\mathbf{x}$, weight vector $\mathbf{w}$ and bias vector $\mathbf{b}$,
+The multi-layer perceptron, arose from the field of psychology \cite{mlp} formed the foundation of neural networks, although later implementation gradually tore away from the biological foundations and now bear only a slight similarity to the functioning of a human brain. For ordinary regression tasks, an input vector $\mathbf{x}$, weight vector $\mathbf{w}$ and bias vector $\mathbf{b}$,
 \[
 \mathbf{x} = \begin{bmatrix}
 x_1 \\
@@ -525,10 +527,10 @@ could be used to estimate a target variable $\mathbf{y}$ as
 \mathbf{y} = \sigma(\mathbf{w}^T\mathbf{x}+\mathbf{b})
 \]
 where $\sigma$ is the sigmoid function for logistic regression and just the identity for linear regression. Now, a perceptron without any hidden layers (as was the original) is effectively similar to ordinary regression. With the addition of hidden layers and non-linear activation functions, multi-layer perceptrons become much more powerful. For a network with $\mathbf{L}$ layers, the output of the $i^{th}$ neuron in the $l^{th}$ layer, where $l \in \mathbf{L}$ is given as
-\begin{gather}
+\begin{gather*}
 z^{l}_{i} = \mathbf{w}^{T}_{i}\mathbf{a}^{l-1} + \mathbf{b}_i\\
 \mathbf{a}^{l}_i = \sigma^{l}(z^{l}_{i})
-\end{gather}
+\end{gather*}
 where $\mathbf{a}^{l}_{i}$ is the activated (having passed through the activation function) output from the $i^{th}$ neuron in the $l^{th}$ layer. This network is trained iteratively by backpropagating \cite{backprop} errors through the connections over multiple epochs until some reasonable notion of convergence is achieved.\\
 
 %CNN
@@ -536,6 +538,18 @@ where $\mathbf{a}^{l}_{i}$ is the activated (having passed through the activatio
 %MC dropout
 
 %SHAP
+
+\subsection{\label{SHAP}SHAP}
+Explainability of results is sought through SHAP values \cite{shap_force_plot} \cite{shap}. Figure \ref{fig:shap} shows the breakdown for one patient over a particular discrete time period.
+
+\begin{figure*}[h]
+  \centering
+  \includegraphics[width=\textwidth]{shap_fig.pdf}
+  \caption{Deviation from expected output for single subject shown on predictor scale. Passing the values through sigmoid function will convert them to response scale, i.e. discrete hazards}
+  \label{fig:shap}
+\end{figure*}
+
+
 
 \section{\label{perf}Code and Reproducibility }
 All relevant code for this study can be found on \href{https://github.com/sourasen1011/UoE_Research_Project_2023/tree/dev}{sourasen1011/UoE\_Research\_Project\_2023/tree/dev}.

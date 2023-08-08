@@ -383,7 +383,7 @@ class Time_Invariant_Survival:
         # change state_var
         self.explained = True
 
-    def plot_explain(self , plot_type:str , cluster:int = 0 , t_s:int = 0 , pat_num:int = 0):
+    def plot_explain(self , plot_type:str , cluster:int = 0 , t_s:int = 0 , pat_num:int = 0)->None:
         '''
         plots of SHAP values
         '''
@@ -406,7 +406,12 @@ class Time_Invariant_Survival:
                 link = 'logit',
                 show = False
             )
+
         elif plot_type == 'waterfall':
+            # these should match the E(f(X)) and f(x) shown in the graph
+            print(f'Expected value {self.shap_utils[0].expected_value[t_s]}')
+            print(f'Subject value {self.nets[0][0](self.test_data.iloc[: , :-2].to_numpy())[pat_num , t_s]}')
+            
             shap_fig = shap.plots._waterfall.waterfall_legacy(
                 explainer.expected_value[t_s], 
                 shap_values[t_s][pat_num,:], 
@@ -414,8 +419,15 @@ class Time_Invariant_Survival:
                 show = False,
                 # plot_size=[10,5]
                 )
+            # Get the current figure and adjust its size
+            fig = shap_fig.figure
+            fig.set_size_inches(15 , 6)
+
+            # Save
+            shap_fig.savefig('shap_fig_2.pdf' , format = 'pdf')
+
         else:
             raise NotImplementedError('not implemented yet')
 
-        return shap_fig
+        # return shap_fig
     #________________________________________________________________________________________________
