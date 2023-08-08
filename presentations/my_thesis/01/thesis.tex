@@ -426,7 +426,7 @@ One of the earlier aims of this study was to see if hybrid deep learning, that i
 The details of experiments comparing the two architectures with other off-the-shelf methods are listed in Table \ref{tab:eval}. Both metrics are reported as \texttt{Mean (lower 90\% confidence interval, upper 90\% confidence interval)}. It is noted that although the upper bound for the time-invariant method is above that of the traditional statistical fitters (CPH and AFT), its mean is below theirs. The time-variant counterpart seems to comfortably beat all other methods in terms of c-index (discriminative power) but both methods have quite a large Brier score (calibration) in comparison to off-the-shelf methods. The Figures \ref{fig:cindex} and \ref{fig:ibs} showcase this situation.\\
 
 
-\begin{figure*}[h]
+\begin{figure*}
   \centering
   \includegraphics[width=\textwidth]{cindex_score_dist_plot.pdf}
   \caption{Distribution of C-index - Time-Variant version run for 10 iterations. All others run for 20 iterations.}
@@ -434,7 +434,7 @@ The details of experiments comparing the two architectures with other off-the-sh
 \end{figure*}
 
 
-\begin{figure*}[h]
+\begin{figure*}
   \centering
   \includegraphics[width=\textwidth]{ibs_score_dist_plot.pdf}
   \caption{Distribution of IBS - Time-Variant version run for 10 iterations. All others run for 20 iterations.}
@@ -442,7 +442,7 @@ The details of experiments comparing the two architectures with other off-the-sh
 \end{figure*}
 
 
-A novel offering of this architecture comes from applying Monte-Carlo dropout. For any particular subject, the returned survival curve natively has confidence bands associated with it. An example is shown in Figure \ref{fig:example_survival_graph}.
+This architecture generates confidence intervals by applying Monte-Carlo dropout. For any particular subject, the returned survival curve natively has confidence bands associated with it. An example is shown in Figure \ref{fig:example_survival_graph}.
 
 \begin{figure}[H]
   \centering
@@ -451,7 +451,17 @@ A novel offering of this architecture comes from applying Monte-Carlo dropout. F
   \label{fig:example_survival_graph}
 \end{figure}
 
-\begin{table*}[t]
+Further, it is also equipped with a wrapper for the Python library \texttt{shap} which allows explanation of particular observations. Figure \ref{fig:shap} shows the breakdown for one patient over a particular discrete time period.
+
+
+\begin{figure*}
+  \centering
+  \includegraphics[width=\textwidth]{shap_fig.pdf}
+  \caption{Deviation from expected output for single subject shown on predictor scale. Passing the values through sigmoid function will convert them to response scale, i.e. discrete hazards}
+  \label{fig:shap}
+\end{figure*}
+
+\begin{table*}
   \centering
   \begin{tabular}{|p{4cm}|p{10cm}|p{1.5cm}|p{1.5cm}|}
      \hline
@@ -540,19 +550,10 @@ where $\mathbf{a}^{l}_{i}$ is the activated (having passed through the activatio
 %SHAP
 
 \subsection{\label{SHAP}SHAP}
-Explainability of results is sought through SHAP values \cite{shap_force_plot} \cite{shap}. Figure \ref{fig:shap} shows the breakdown for one patient over a particular discrete time period.
-
-\begin{figure*}[h]
-  \centering
-  \includegraphics[width=\textwidth]{shap_fig.pdf}
-  \caption{Deviation from expected output for single subject shown on predictor scale. Passing the values through sigmoid function will convert them to response scale, i.e. discrete hazards}
-  \label{fig:shap}
-\end{figure*}
-
-
+Explainability of results is sought through SHAP values. The concept of SHAP (SHapley Additive Explanations) comes from coalitional game theory and were recently incorporated into the field of machine learning \cite{shap_force_plot} \cite{shap}. The idea is to justly allocate credit to each member of a group (or coalition) for achieving a common goal. An easy example to think of might be to think of a group of friends running up a restaurant bill. At the end, it would be fair for them to split the bill according to what they individually ate. It can be seen that this quite naturally translates to the world of model building, where it is important to know what the contribution of each feature was to the final model output. SHAP provides this unified framework.
 
 \section{\label{perf}Code and Reproducibility }
-All relevant code for this study can be found on \href{https://github.com/sourasen1011/UoE_Research_Project_2023/tree/dev}{sourasen1011/UoE\_Research\_Project\_2023/tree/dev}.
+All relevant code for this study can be found on \href{https://github.com/sourasen1011/UoE_Research_Project_2023/tree/dev}{https://github.com/sourasen1011/UoE\_Research\_Project\_2023/}.
 
 
 \cite{*}
