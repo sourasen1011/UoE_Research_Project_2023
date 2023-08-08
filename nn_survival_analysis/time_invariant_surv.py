@@ -398,18 +398,24 @@ class Time_Invariant_Survival:
         # plot the SHAP values for the 't_s'^{th} time step for the subject number 'pat' - this yields explanation for discrete hazards
         if plot_type == 'force':
             shap.initjs() # init js env??
-            shap.force_plot(
+            
+            shap_fig = shap.force_plot(
                 explainer.expected_value[t_s], 
                 shap_values[t_s][pat_num,:], 
                 x_test_grouped.get_group(cluster).iloc[pat_num,:-2] , 
-                link = 'logit'
+                link = 'logit',
+                show = False
             )
         elif plot_type == 'waterfall':
-            shap.plots._waterfall.waterfall_legacy(
+            shap_fig = shap.plots._waterfall.waterfall_legacy(
                 explainer.expected_value[t_s], 
                 shap_values[t_s][pat_num,:], 
-                feature_names = x_test_grouped.get_group(cluster).iloc[:,:-2].columns
+                feature_names = x_test_grouped.get_group(cluster).iloc[:,:-2].columns,
+                show = False,
+                # plot_size=[10,5]
                 )
         else:
             raise NotImplementedError('not implemented yet')
+
+        return shap_fig
     #________________________________________________________________________________________________
