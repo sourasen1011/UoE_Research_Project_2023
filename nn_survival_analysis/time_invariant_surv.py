@@ -424,7 +424,7 @@ class Time_Invariant_Survival:
             fig.set_size_inches(15 , 6)
 
             # Save
-            shap_fig.savefig('shap_fig_2.pdf' , format = 'pdf')
+            shap_fig.savefig('shap_fig.pdf' , format = 'pdf')
 
         else:
             raise NotImplementedError('not implemented yet')
