@@ -2,7 +2,6 @@
 __pycache__/
 *.py[cod]
 *$py.class
-rxiv/
 
 # C extensions
 *.so
@@ -163,3 +162,7 @@ cython_debug/
 
 # so i don't push my passwords file like an idiot
 .json
+
+# some files i just don't fancy pushing
+.synctex.gz
+rxiv/
