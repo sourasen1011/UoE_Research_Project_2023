@@ -190,7 +190,9 @@ where $\phi_j(x_i)$ is the output of the neural network at node $j$ correspondin
 Returning to the problem at hand, for such a parameterization, the continuous time scale $\mathbb{T}$ needs to be discretized into $m$ pieces. A simple way to do this is to equally divide up the set $\mathbb{T}$ into $m$ equal parts. The hazards across these $m$ timesteps can be cumulatively multiplied to find the survival function as seen in Eq. \ref{eq:cum_haz}. 
 
 \section{\label{UQ_explain}Uncertainty Quantification and Explainability}
-An addition this work attempts to make to the above is by introducing a layer of uncertainty quantification via Monte-Carlo dropout \cite{mcdropout}. Dropout was originally introduced in 2014 \cite{dropout} as a method to intorduce regularization into neural networks by randomly dropp units along with their connections. This prevents units from co-adapting too much, thereby forcing their neighbours to `learn' the signal in a more `robust' fashion. Dropout is generally reserved for training as a means to enforce regularization on the network. Libraries like PyTorch allow users to prime networks for training or evaluation. When applied during the testing or prediction phase as well, a probability distribution of the output is created, allowing for probabilistic inference instead of point inference as present in regular neural networks. Over many iterations, this essentially means that the network used for prediction is slightly different each time, resulting in slightly different outputs - thereby allowing users to generate a probability distribution of outputs.\\
+Dropout was originally introduced in 2014 \cite{dropout} as a method to intorduce regularization into neural networks by randomly dropp units along with their connections. This prevents units from co-adapting too much, thereby forcing their neighbours to `learn' the signal in a more `robust' fashion. Dropout is generally reserved for training as a means to enforce regularization on the network. Libraries like PyTorch allow users to prime networks for training or evaluation.\\
+
+An addition this work attempts to make to the above is by introducing a layer of uncertainty quantification via Monte-Carlo dropout \cite{mcdropout}. When applied during the testing or prediction phase as well, a probability distribution of the output is created, allowing for probabilistic inference instead of point inference as present in regular neural networks. Over many iterations, this essentially means that the network used for prediction is slightly different each time, resulting in slightly different outputs - thereby allowing users to generate a probability distribution of outputs.\\
 
 Being uncertainty-aware ties in with the idea of interpretability of modern deep learning methods, which is often a barrier towards the adoption of such methods into highly regulated industries such as finance or medicine. SHAP (SHapley Additive exPlanations) values \cite{shap}, extended from the field of cooperative game theory provide a unified, model-agnostic method to explain the contributions of covariates to a model's output.
 
@@ -529,7 +531,8 @@ It is noted that the baseline hazard $h_0$ is canceled from both the numerator a
 \[
 \ell = \sum^{}_{i:C_i=1} \Bigg( w^Tx_i - log\sum^{}_{j:Y_j>Y_i}e^{w^Tx_j}\Bigg) \numberthis  \label{eq:log_likelihood}
 \]
-Interestingly, this negative of this log-likelihood is used as the loss function for DeepSurv and the Faraggi-Simon net.\\
+Interestingly, this negative of this log-likelihood is used as the loss function for DeepSurv \cite{deepsurv} and the Faraggi-Simon net \cite{faraggi_simons}.\\
+%\cite{faraggi_simons} and later in \cite{deepsurv}
 
 \subsection{\label{app:loss}Loss Function(s)}
 \textbf{Negative Log-Likelihood - hazard function}\\
