@@ -478,6 +478,10 @@ Neural network methods capable of temporal learning (forms of RNN) can be applie
 
 In future, if the clustering utility is investigated in more detail, one might find that some parts of the code break due to the random initialization of clusters sometimes producing cohorts whose duration indices do not match the number of requested discretizations. This is a bug and may warrant investigation. For evaluation criteria, another popular metric in the survival analysis literature is cumulative dynamic AUC \cite{cum_dyn_auc}. Future iterations can focus on this metric along with the two others mentioned in this study to see if it yields a different assessment of the models' suitability.
 
+
+\section{\label{disc}Discussion}
+Both the time-invariant and time-varying architectures are sacrificing calibration for discriminatory power. Again, the Figures \ref{fig:cindex} and \ref{fig:ibs} shows this. Depending on the situation, the metric to which more importance is given may change. Therefore, careful consideration needs to be taken before attempting to apply the method(s) proposed in this study. Another criterion to consider that often goes hand in hand with neural networks and large scale data is training time. Deep learning methodologies can indeed outperform traditional methods, provided proper hyperparameter tuning and enough training time. That being said, it is often seen that training time (number of epochs) is often not linearly correlated with better performance (in terms of discriminatory power).
+
 %\cite{*}
 
 \bibliography{references}% Produces the bibliography via BibTeX.
