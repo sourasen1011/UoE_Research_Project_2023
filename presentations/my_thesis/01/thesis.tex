@@ -114,27 +114,13 @@ It can be thought of as the complement of the cumulative distribution function $
 S(t) = P(T>t) = 1 - P(T\le t) = 1 - F(t), \ 0 < t <  \infty \label{eq:inv_cum_dist}
 \end{align}
 
-Another way to specify the survival distribution is through the hazard function, which denotes the instantaneous rate of failure.
-\begin{align}
-h(t) = \lim_{\delta\to0}\frac{P(t<T<t+\delta|T>t)}{\delta} \label{eq:haz}
-\end{align}
-For the continuous-time scenario, the hazard function and survival function are related as follows. 
+Another way to specify the survival distribution is through the hazard function, which denotes the instantaneous rate of failure. For the continuous-time scenario, the hazard function and survival function are related as follows. 
 \begin{gather*}
 f(t) = \frac{d}{dt}F(t) = -\frac{d}{dt}S(t)\\
 h(t) = \frac{f(t)}{S(t)} \numberthis \label{eq:haz_pmf_surv}
 \end{gather*}
 
-where $f(t)$ is the probability mass function (PMF). This says that the hazard is the probability of the subject experiencing an event at time t, provided that the subject is alive till time t. It can be further simplified as
-\begin{gather*}
-h(t) = -\frac{d}{dt}S(t)\frac{1}{S(t)}\\
-\implies S(t) = exp\left (- \int_{0}^{t}h(u)du\right) \numberthis  \label{eq:cum_haz}
-\end{gather*}
-
-This relationship produces the survival function from a corresponding hazard function \cite{Moore_2016}.
-\[
-H(u) = \int_{0}^{t}h(u)du
-\]
-is known as the cumulative hazard, which is also extensively studied throughout the literature.\\
+where $f(t)$ is the probability mass function (PMF). This says that the hazard is the probability of the subject experiencing an event at time t, provided that the subject is alive till time t. \\
 
 \subsection{\label{trad_fits}A Brief Review of Traditional Fitters}
 In the context of continuous time survival models, the Cox Proportional Hazards model has long been the `gold-standard' for survival analysis \cite{cph}. As seen in \cite{deepsurv}, extensions have been made for Cox models to learn non-linear hazards (although the proportional hazards assumption remains). The assumption of a proportional hazards model is that the covariates have a multiplicative effect on the hazard.
@@ -143,23 +129,7 @@ h(t|x) = h_0(t)e^{w^Tx} \numberthis  \label{eq:prop_haz}
 \end{gather*}
 where $h_0$ is called as the baseline hazard.\\
 
-Proportional hazards models are learned by optimizing Cox’s partial likelihood in classical survival analysis \cite{raykar_cindex}. A general formulation is derived as follows \cite{Moore_2016}. Consider failure time $t_i$. The set of all subjects in the trial “at risk” for failure at this time is denoted by $j:Y_j>Y_i$, where $Y$ denotes the observed survival time. The probability of patient $i$ failing at this time is 
-\[
-L_i = \frac{h(t_i | x_i)}{\sum^{}_{j:Y_j>Y_i}h(t_i|x_j)} \numberthis  \label{eq:likelihood_contribution}
-\]
-where $h(t|x)$ denotes the hazard for patient with covariates $x$ at time $t$. The likelihood of the entire cohort is thus,
-\[
-L = \prod^{}_{i:C_i=1}L_i = \prod^{}_{i:C_i=1}\frac{h(t_i | x_i)}{\sum^{}_{j:Y_j>Y_i}h(t_i|x_j)} \numberthis  \label{eq:likelihood}
-\]
-where $C_i=1$ denotes an observed (uncensored) event. The assumption of a proportional hazards model reduces this to
-\[
-L = \prod^{}_{C_i=1}\frac{e^{w^Tx_i}}{\sum^{}_{j:Y_j>Y_i}e^{w^Tx_j}} \numberthis  \label{eq:reduced_likelihood_contribution}
-\] 
-It is noted that the baseline hazard $h_0$ is canceled from both the numerator and the denominator \cite{raykar_cindex}. The log likelihood therefore becomes
-\[
-\ell = \sum^{}_{i:C_i=1} \Bigg( w^Tx_i - log\sum^{}_{j:Y_j>Y_i}e^{w^Tx_j}\Bigg) \numberthis  \label{eq:log_likelihood}
-\]
-Interestingly, this negative of this log-likelihood is used as the loss function for DeepSurv and the Faraggi-Simon net.\\
+Proportional hazards models are learned by maximizing Cox’s partial likelihood in classical survival analysis \cite{raykar_cindex}. An expanded formulation is provided in Appendix \ref{app:part_lik}.\\
 
 Accelerated failure time models are a popular parametric alternative to the Cox PH model \cite{aft}. They are especially handy in discriminating between groups where the survival times of one can be uniformly shifted backward to forward to get the survival times of another. Unlike Cox PH model, where the baseline hazard is unspecified, AFT models directly model the survival times \cite{aft_2009}.\\
 
@@ -524,50 +494,42 @@ This estimator, first proposed in \cite{km_curve}, is the product over the failu
 \],
 where $n_i$ is the number of subjects at risk at time $t_i$, and $d_i$ is the number of individuals who fail at that time \cite{Moore_2016}. When plotted, it produces the standard step curve that comes up in all introductory material to survival analysis.
 
-\subsection{\label{app:mlp}Multi Layer Perceptron}
-The multi-layer perceptron, arose from the field of psychology \cite{mlp} formed the foundation of neural networks, although later implementation gradually tore away from the biological foundations and now bear only a slight similarity to the functioning of a human brain. For ordinary regression tasks, an input vector $\mathbf{x}$, weight vector $\mathbf{w}$ and bias vector $\mathbf{b}$,
+\subsection{\label{app:more_basics}More Survival Analysis Basics}
+Classical expression for hazard is given as
+\begin{align}
+h(t) = \lim_{\delta\to0}\frac{P(t<T<t+\delta|T>t)}{\delta} \label{eq:haz}
+\end{align}
+
+From equation \ref{eq:haz_pmf_surv}, it can be further simplified as
+\begin{gather*}
+h(t) = -\frac{d}{dt}S(t)\frac{1}{S(t)}\\
+\implies S(t) = exp\left (- \int_{0}^{t}h(u)du\right) \numberthis  \label{eq:cum_haz}
+\end{gather*}
+
+This relationship produces the survival function from a corresponding hazard function \cite{Moore_2016}.
 \[
-\mathbf{x} = \begin{bmatrix}
-x_1 \\
-x_2 \\
-\vdots \\
-x_n
-\end{bmatrix}
-\quad
-\mathbf{w} = \begin{bmatrix}
-w_1 \\
-w_2 \\
-\vdots \\
-w_n
-\end{bmatrix}
-\quad
-\mathbf{b} = \begin{bmatrix}
-b_1 \\
-b_2 \\
-\vdots \\
-b_n
-\end{bmatrix}
+H(u) = \int_{0}^{t}h(u)du
 \]
-could be used to estimate a target variable $\mathbf{y}$ as 
+is known as the cumulative hazard, which is also extensively studied throughout the literature.
+
+\subsection{\label{app:part_lik}Cox Partial Likelihood}
+A general formulation for the Cox partial likelihood is given following \cite{Moore_2016}. Consider failure time $t_i$. The set of all subjects in the trial “at risk” for failure at this time is denoted by $j:Y_j>Y_i$, where $Y$ denotes the observed survival time. The probability of patient $i$ failing at this time is 
 \[
-\mathbf{y} = \sigma(\mathbf{w}^T\mathbf{x}+\mathbf{b}) \numberthis  \label{eq:mlp}
+L_i = \frac{h(t_i | x_i)}{\sum^{}_{j:Y_j>Y_i}h(t_i|x_j)} \numberthis  \label{eq:likelihood_contribution}
 \]
-where $\sigma$ is the sigmoid function for logistic regression and just the identity for linear regression. Now, a perceptron without any hidden layers (as was the original) is effectively similar to ordinary regression. With the addition of hidden layers and non-linear activation functions, multi-layer perceptrons become much more powerful. For a network with $\mathbf{L}$ layers, the output of the $i^{th}$ neuron in the $l^{th}$ layer, where $l \in \mathbf{L}$ is given as
-\begin{gather}
-z^{l}_{i} = \mathbf{w}^{T}_{i}\mathbf{a}^{l-1} + \mathbf{b}_i \label{eq:mlp_inactivate} \\
-\mathbf{a}^{l}_i = \sigma^{l}(z^{l}_{i}) \label{eq:mlp_activated}
-\end{gather}
-where $\mathbf{a}^{l}_{i}$ is the activated (having passed through the activation function) output from the $i^{th}$ neuron in the $l^{th}$ layer. This network is trained iteratively by backpropagating \cite{backprop} errors through the connections over multiple epochs until some reasonable notion of convergence is achieved.
-
-%CNN
-
-%MC dropout
-
-%SHAP
-
-\subsection{\label{app:SHAP}SHAP}
-Explainability of results is sought through SHAP values. The concept of SHAP (SHapley Additive Explanations) comes from coalitional game theory and were recently incorporated into the field of machine learning \cite{shap_force_plot} \cite{shap}. The idea is to justly allocate credit to each member of a group (or coalition) for achieving a common goal. An easy example to think of might be to think of a group of friends running up a restaurant bill. At the end, it would be fair for them to split the bill according to what they individually ate. It can be seen that this quite naturally translates to the world of model building, where it is important to know what the contribution of each feature was to the final model output. SHAP provides this unified framework.
-
+where $h(t|x)$ denotes the hazard for patient with covariates $x$ at time $t$. The likelihood of the entire cohort is thus,
+\[
+L = \prod^{}_{i:C_i=1}L_i = \prod^{}_{i:C_i=1}\frac{h(t_i | x_i)}{\sum^{}_{j:Y_j>Y_i}h(t_i|x_j)} \numberthis  \label{eq:likelihood}
+\]
+where $C_i=1$ denotes an observed (uncensored) event. The assumption of a proportional hazards model reduces this to
+\[
+L = \prod^{}_{C_i=1}\frac{e^{w^Tx_i}}{\sum^{}_{j:Y_j>Y_i}e^{w^Tx_j}} \numberthis  \label{eq:reduced_likelihood_contribution}
+\] 
+It is noted that the baseline hazard $h_0$ is canceled from both the numerator and the denominator \cite{raykar_cindex}. The log likelihood therefore becomes
+\[
+\ell = \sum^{}_{i:C_i=1} \Bigg( w^Tx_i - log\sum^{}_{j:Y_j>Y_i}e^{w^Tx_j}\Bigg) \numberthis  \label{eq:log_likelihood}
+\]
+Interestingly, this negative of this log-likelihood is used as the loss function for DeepSurv and the Faraggi-Simon net.\\
 
 \subsection{\label{app:loss}Loss Function(s)}
 \textbf{Negative Log-Likelihood - hazard function}\\
@@ -617,10 +579,52 @@ The negative of this lower-bound is chosen to be the loss function, which can th
 \mathcal{L}_{lbo} = -\frac{1}{|\mathcal{E}|}\sum_{i:C_i = 1}\sum_{T_j > T_i} 1 +  (log\ \sigma(\eta_j - \eta_i)/log\ 2) \numberthis  \label{eq:l_lbo}
 \]
 
-These two loss functions are linearly combined based on a hyperparameter $\alpha \in [0,1]$ to make the total loss
+\subsection{\label{app:mlp}Multi Layer Perceptron}
+The multi-layer perceptron, arose from the field of psychology \cite{mlp} formed the foundation of neural networks, although later implementation gradually tore away from the biological foundations and now bear only a slight similarity to the functioning of a human brain. For ordinary regression tasks, an input vector $\mathbf{x}$, weight vector $\mathbf{w}$ and bias vector $\mathbf{b}$,
 \[
-\mathcal{L}_{total} = \alpha\mathcal{L}_{nll} + (1 - \alpha)\mathcal{L}_{lbo} \numberthis  \label{eq:l_total}
+\mathbf{x} = \begin{bmatrix}
+x_1 \\
+x_2 \\
+\vdots \\
+x_n
+\end{bmatrix}
+\quad
+\mathbf{w} = \begin{bmatrix}
+w_1 \\
+w_2 \\
+\vdots \\
+w_n
+\end{bmatrix}
+\quad
+\mathbf{b} = \begin{bmatrix}
+b_1 \\
+b_2 \\
+\vdots \\
+b_n
+\end{bmatrix}
 \]
+could be used to estimate a target variable $\mathbf{y}$ as 
+\[
+\mathbf{y} = \sigma(\mathbf{w}^T\mathbf{x}+\mathbf{b}) \numberthis  \label{eq:mlp}
+\]
+where $\sigma$ is the sigmoid function for logistic regression and just the identity for linear regression. Now, a perceptron without any hidden layers (as was the original) is effectively similar to ordinary regression. With the addition of hidden layers and non-linear activation functions, multi-layer perceptrons become much more powerful. For a network with $\mathbf{L}$ layers, the output of the $i^{th}$ neuron in the $l^{th}$ layer, where $l \in \mathbf{L}$ is given as
+\begin{gather}
+z^{l}_{i} = \mathbf{w}^{T}_{i}\mathbf{a}^{l-1} + \mathbf{b}_i \label{eq:mlp_inactivate} \\
+\mathbf{a}^{l}_i = \sigma^{l}(z^{l}_{i}) \label{eq:mlp_activated}
+\end{gather}
+where $\mathbf{a}^{l}_{i}$ is the activated (having passed through the activation function) output from the $i^{th}$ neuron in the $l^{th}$ layer. This network is trained iteratively by backpropagating \cite{backprop} errors through the connections over multiple epochs until some reasonable notion of convergence is achieved.
+
+
+\subsection{\label{app:SHAP}SHAP}
+Explainability of results is sought through SHAP values. The concept of SHAP (SHapley Additive Explanations) comes from coalitional game theory and were recently incorporated into the field of machine learning \cite{shap_force_plot} \cite{shap}. The idea is to justly allocate credit to each member of a group (or coalition) for achieving a common goal. An easy example to think of might be to think of a group of friends running up a restaurant bill. At the end, it would be fair for them to split the bill according to what they individually ate. It can be seen that this quite naturally translates to the world of model building, where it is important to know what the contribution of each feature was to the final model output. SHAP provides this unified framework.
+
+
+%CNN
+
+%MC dropout
+
+%SHAP
+
 
 %\section{\label{perf}Code and Reproducibility }
 %All relevant code for this study can be found on \href{https://github.com/sourasen1011/UoE_Research_Project_2023/%tree/dev}{https://github.com/sourasen1011/UoE\_Research\_Project\_2023/}.
