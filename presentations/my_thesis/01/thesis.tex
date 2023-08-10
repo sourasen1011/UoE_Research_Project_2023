@@ -84,13 +84,14 @@ Extensions to the classical Cox proportional hazards model were first proposed i
 \section{\label{surv}Survival Analysis}
 \subsection{\label{surv_basics}Basics}
 Survival analysis deals with the estimation of a survival distribution representing the probability of an event of interest, typically a failure, to occur beyond a certain time in the future \cite{nagpal_deep_2021}. One way to specify the survival distribution is through the survival function. The survival function defines the probability of surviving till point t \cite{Moore_2016}.
-\[
-S(t) = P(T>t), \ 0 < t <  \infty
-\]
+\begin{align}
+S(t) = P(T>t), \ 0 < t <  \infty \label{eq:surv}
+\end{align}
 It can be thought of as the complement of the cumulative distribution function $F(t)$.
-\[
-S(t) = P(T>t) = 1 - P(T\le t) = 1 - F(t), \ 0 < t <  \infty
-\]
+\begin{align}
+S(t) = P(T>t) = 1 - P(T\le t) = 1 - F(t), \ 0 < t <  \infty \label{eq:inv_cum_dist}
+\end{align}
+
 Another way to specify the survival distribution is through the hazard function, which denotes the instantaneous rate of failure.
 \[
 h(t) = \lim_{\delta\to0}\frac{P(t<T<t+\delta|T>t)}{\delta}
@@ -528,9 +529,13 @@ Neural network methods capable of temporal learning (forms of RNN) can be applie
 
 In future, if the clustering utility is investigated in more detail, one might find that some parts of the code break due to the random initialization of clusters sometimes producing cohorts whose duration indices do not match the number of requested discretizations. This is a bug and may warrant investigation. For evaluation criteria, another popular metric in the survival analysis literature is cumulative dynamic AUC \cite{cum_dyn_auc}. Future iterations can focus on this metric along with the two others mentioned in this study to see if it yields a different assessment of the models' suitability.
 
+\cite{*}
+
+\bibliography{references}% Produces the bibliography via BibTeX.
+
 \appendix
 
-\section{\label{appdx}Appendix}
+\section{\label{appdx}Supplementary Material}
 
 Some formal mathematical formulations of the methods used in this paper are elaborated in the following sections.
 
@@ -588,11 +593,6 @@ Explainability of results is sought through SHAP values. The concept of SHAP (SH
 
 %\section{\label{perf}Code and Reproducibility }
 %All relevant code for this study can be found on \href{https://github.com/sourasen1011/UoE_Research_Project_2023/%tree/dev}{https://github.com/sourasen1011/UoE\_Research\_Project\_2023/}.
-
-
-\cite{*}
-
-\bibliography{references}% Produces the bibliography via BibTeX.
 
 
 \end{document}
