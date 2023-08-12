@@ -7,9 +7,10 @@ from model_utils import *
 from losses import *
 from models import *
 
-def run_fitters():
+def run_fitters(config_file_path , verbose = True):
     '''
     helper function to run time invariant survival
+    speak : verbose or not
     '''
     # have a dictionary to store all the metrics
     eval_dict = {
@@ -84,7 +85,7 @@ def run_fitters():
         )
 
     # fit
-    tvs.fit(verbose = True)
+    tvs.fit(verbose = verbose)
     mean_ , up_ , low_ , y_test_dur , y_test_event = tvs.predict() # Visualize -> tis.visualize(mean_ , up_ , low_ , _from = 40 , _to = 50 )
     tvs_cindex , tvs_ibs = tvs.evaluation(mean_ , y_test_dur , y_test_event, plot = False)
 
@@ -130,7 +131,7 @@ def run_fitters():
     )
 
     # fit
-    tis.fit(verbose = True)
+    tis.fit(verbose = verbose)
     mean_ , up_ , low_ , y_test_dur , y_test_event = tis.predict() # Visualize -> tis.visualize(mean_ , up_ , low_ , _from = 40 , _to = 50 )
     tis_cindex , tis_ibs = tis.evaluation(mean_ , y_test_dur , y_test_event, plot = False)
     
