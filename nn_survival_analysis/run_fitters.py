@@ -7,7 +7,7 @@ from model_utils import *
 from losses import *
 from models import *
 
-def run_fitters(config_file_path , verbose = True):
+def run_fitters(config_file_path , data_folder_path , verbose = True):
     '''
     helper function to run time invariant survival
     speak : verbose or not
@@ -49,27 +49,27 @@ def run_fitters(config_file_path , verbose = True):
         configs = json.load(file)
 
     # Read the pickled DataFrames
-    with open('../05_preprocessing_emr_data/data/x_train.pickle', 'rb') as file:
+    with open(data_folder_path+'x_train.pickle', 'rb') as file:
         x_train = pickle.load(file)
-    with open('../05_preprocessing_emr_data/data/x_test.pickle', 'rb') as file:
+    with open(data_folder_path+'x_test.pickle', 'rb') as file:
         x_test = pickle.load(file)
-    with open('../05_preprocessing_emr_data/data/x_val.pickle', 'rb') as file:
+    with open(data_folder_path+'x_val.pickle', 'rb') as file:
         x_val = pickle.load(file)
 
     # Read the pickled DataFrames
-    with open('../05_preprocessing_emr_data/data/x_train_reshape_tv.pickle', 'rb') as file:
+    with open(data_folder_path+'x_train_reshape_tv.pickle', 'rb') as file:
         x_train_reshape_tv = pickle.load(file)
-    with open('../05_preprocessing_emr_data/data/x_test_reshape_tv.pickle', 'rb') as file:
+    with open(data_folder_path+'x_test_reshape_tv.pickle', 'rb') as file:
         x_test_reshape_tv = pickle.load(file)
-    with open('../05_preprocessing_emr_data/data/x_val_reshape_tv.pickle', 'rb') as file:
+    with open(data_folder_path+'x_val_reshape_tv.pickle', 'rb') as file:
         x_val_reshape_tv = pickle.load(file)
 
     # Read the pickled targets
-    with open('../05_preprocessing_emr_data/data/y_train.pickle', 'rb') as file:
+    with open(data_folder_path+'y_train.pickle', 'rb') as file:
         y_train = pickle.load(file)
-    with open('../05_preprocessing_emr_data/data/y_test.pickle', 'rb') as file:
+    with open(data_folder_path+'y_test.pickle', 'rb') as file:
         y_test = pickle.load(file)
-    with open('../05_preprocessing_emr_data/data/y_val.pickle', 'rb') as file:
+    with open(data_folder_path+'y_val.pickle', 'rb') as file:
         y_val = pickle.load(file)
 
     #-----------------------------------------------------------------------------------------------
@@ -139,7 +139,7 @@ def run_fitters(config_file_path , verbose = True):
     eval_dict['tis']['cindex'] = tis_cindex
     eval_dict['tis']['ibs'] = tis_ibs
     
-    #-----------------------------------------------------------------------------------------------
+    # -----------------------------------------------------------------------------------------------
     # instantiate - CPH
     cph = CPH(configs = configs, train_data = x_train, test_data = x_test, val_data = x_val)
 

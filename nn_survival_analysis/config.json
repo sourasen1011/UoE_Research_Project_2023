@@ -3,10 +3,10 @@
         "training":{
             "clusters":1,
             "q_cuts":15,
-            "hidden_size":25,
-            "alpha":0.01,
+            "hidden_size":64,
+            "alpha":0.001,
             "batch_size":256,
-            "num_epochs":400,
+            "num_epochs":600,
             "learning_rate":0.001,
             "shuffle":true,
             "patience":20,
@@ -27,10 +27,10 @@
     "time_variant":{
         "training":{
             "q_cuts":15,
-            "hidden_size":25,
-            "alpha":0.01,
+            "hidden_size":64,
+            "alpha":0.001,
             "batch_size":256,
-            "num_epochs":100,
+            "num_epochs":200,
             "learning_rate":0.001,
             "shuffle":true,
             "patience":20,
