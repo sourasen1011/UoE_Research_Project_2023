@@ -39,6 +39,7 @@
 \usepackage{enumitem}
 \usepackage{amsfonts}
 \usepackage{dsfont}
+\usepackage{tabularx}
 %\usepackage{multicol} % multi col env
 %\usepackage[margin=0.5in]{geometry} % Adjust the margin values as needed
 
@@ -410,13 +411,13 @@ This leads to the question of statistical similarity of the curves thus generate
 
 \begin{table}
   \centering
-  \begin{tabular}{|c|c|c|c|}
+  \begin{tabular}{|c|c|}
   \hline
-  \textbf{p-values}&\textbf{CPH}&\textbf{KM}&\textbf{NN}\\
+  \textbf{p-values}&\textbf{NN}\\
   \hline
-  \textbf{CPH}&-&0.0019&0.1877\\
+  \textbf{CPH}&0.1329\\
   \hline
-  \textbf{KM}&-&-&0.0461\\
+  \textbf{KM}&0.0169\\
   \hline
   \end{tabular}
   \caption[KS test]{Results of KS test}
@@ -443,23 +444,23 @@ From here, it may be natural to want to investigate the factors that cause anind
 
 \begin{table*}
   \centering
-  \begin{tabular}{|p{4cm}|p{10cm}|p{1.5cm}|p{1.5cm}|}
+  \begin{tabular}{|p{4cm}|p{6cm}|p{3.5cm}|p{3.5cm}|}
      \hline
     \textbf{Model} & \textbf{Hyperparameters} & \textbf{C-Index} & \textbf{IBS} \\
     \hline
-    Cox Proportional Hazards (CPH) & penalizer = 0.1, step\_size = 0.1 & 0.6953 & \textbf{0.1731}\\
+    Cox Proportional Hazards (CPH) & \raggedright penalizer = 0.1, step\_size = 0.1 & 0.6953 & \textbf{0.1741}\\
     \hline
-    Weibull Accelerated Failure Times (AFT) & penalizer = 0.01  & 0.6953 & 0.1741\\
+    Weibull Accelerated Failure Times (AFT) & \raggedright  penalizer = 0.01  & 0.6953 & 0.1757\\
     \hline
-    Random Survival Forest & n\_estimators=1000, min\_samples\_split=10, min\_samples\_leaf=15, n\_jobs=-1, random\_state=1234, oob\_score = True  & 0.6911 (0.6855, 0.6973) & 0.2013 (0.1998, 0.2024)\\
+    Random Survival Forest & \raggedright n\_estimators=1000, min\_samples\_split=10, min\_samples\_leaf=15, n\_jobs=-1, random\_state=1234, oob\_score = True  & 0.7106 (0.7057, 0.7172) & 0.2033 (0.2021, 0.2043)\\
     \hline
-    PyCox (Logistic Hazard loss function \cite{kvamme_continuous_2019}) & discretization=15, layers=[256,256],  batch\_norm=True, dropout=0.5, batch\_size=256, epochs=500 & 0.5984 (0.5723, 0.6104)& 0.1768 (0.1751, 0.1778)\\
+    PyCox (Logistic Hazard loss function \cite{kvamme_continuous_2019}) & \raggedright discretization=15, layers=[256,256],  batch\_norm=True, dropout=0.5, batch\_size=256, epochs=500 & 0.6081 (0.5801, 0.6338)& 0.1846 (0.1826, 0.1875)\\
     \hline
-    Deep Survival Machines & k=6, distribution=LogNormal, learning\_rate=1e-3, layers=[100, 100] & 0.6498 (0.6016, 0.6598) & 0.2739 (0.2651, 0.2834)\\
+    Deep Survival Machines & \raggedright k=6, distribution=LogNormal, learning\_rate=1e-3, layers=[100, 100] & 0.6632 (0.6471, 0.6712) & 0.2745 (0.2717, 0.2837)\\
     \hline
-    Time-Invariant Survival & clusters=1, discretizations = 15, hidden\_size = 25 , alpha = 0.05 , batch\_size=256, num\_epochs=400, learning\_rate=0.001, patience=20, dropout\_rate = 0.5, mc\_iter = 100 & 0.6903 (0.6789, 0.6994) &0.4030 (0.3937, 0.4090) \\
+    Time-Invariant Survival & \raggedright clusters:1, discretizations:15, hidden\_size:64, alpha:0.001, batch\_size:256, num\_epochs:600, learning\_rate:0.001, shuffle:true, patience:20, dropout:0.5, mc\_iter = 100 & 0.6999 (0.6939, 0.7041) &0.4244 (0.4165, 0.4286) \\
     \hline
-    Time-Variant Survival & discretizations = 15, hidden\_size = 25 , alpha = 0.01 , batch\_size=256, num\_epochs=100, learning\_rate=0.001, patience=20, dropout\_rate = 0.5, mc\_iter = 100  & \textbf{0.7301} (0.7263 , 0.7352) & 0.4039 (0.3981, 0.4072)\\
+    Time-Variant Survival & \raggedright discretizations = 15, hidden\_size = 64 , alpha = 0.001 , batch\_size=256, num\_epochs=200, learning\_rate=0.001, patience=20, dropout\_rate = 0.5, mc\_iter = 100  & \textbf{0.7200} (0.7126 , 0.7261) & 0.3731 (0.3652, 0.3775)\\
     \hline
   \end{tabular}
   \caption[Experiment results]{Evaluation metrics - Best metrics are written in \textbf{bold}. Both metrics are reported as \texttt{Mean (lower 90\% confidence interval, upper 90\% confidence interval)}.}
@@ -496,7 +497,7 @@ Both the time-invariant and time-varying architectures are sacrificing calibrati
 
 \appendix
 
-\section{\label{appdx}Supplementary Material}
+\section{\label{appdx}Mathematical Formulations}
 
 Some formal mathematical formulations of the methods used in this paper are elaborated in the following sections.
 
@@ -594,6 +595,9 @@ The negative of this lower-bound is chosen to be the loss function, which can th
 \mathcal{L}_{lbo} = -\frac{1}{|\mathcal{E}|}\sum_{i:C_i = 1}\sum_{T_j > T_i} 1 +  (log\ \sigma(\eta_j - \eta_i)/log\ 2) \numberthis  \label{eq:l_lbo}
 \]
 
+
+\section{\label{appdx2}Tools Used}
+
 \subsection{\label{app:mlp}Multi Layer Perceptron}
 The multi-layer perceptron, arose from the field of psychology \cite{mlp} formed the foundation of neural networks, although later implementation gradually tore away from the biological foundations and now bear only a slight similarity to the functioning of a human brain. For ordinary regression tasks, an input vector $\mathbf{x}$, weight vector $\mathbf{w}$ and bias vector $\mathbf{b}$,
 \[
@@ -629,11 +633,63 @@ z^{l}_{i} = \mathbf{w}^{T}_{i}\mathbf{a}^{l-1} + \mathbf{b}_i \label{eq:mlp_inac
 \end{gather}
 where $\mathbf{a}^{l}_{i}$ is the activated (having passed through the activation function) output from the $i^{th}$ neuron in the $l^{th}$ layer. This network is trained iteratively by backpropagating \cite{backprop} errors through the connections over multiple epochs until some reasonable notion of convergence is achieved.
 
+\subsection{\label{app:conv}Convolutional Neural Networks}
+CNNs are a type of regularized feed-forward network that learn via filter optimization. This type of network has roots in biological vision. The first application of backpropagation to CNNs was in \cite{cnn}. They are useful for preserving spatial arrangement within the data and enforcing local connectivity. CNNs have found success in field of image and audio processing and even time series forecasting. Because of the shared-weight architecture, CNNs require far less connections than an equivalent fully-connected network.
 
 \subsection{\label{app:SHAP}SHAP}
-Explainability of results is sought through SHAP values. The concept of SHAP (SHapley Additive Explanations) comes from coalitional game theory and were recently incorporated into the field of machine learning \cite{shap_force_plot} \cite{shap}. The idea is to justly allocate credit to each member of a group (or coalition) for achieving a common goal. An easy example to think of might be to think of a group of friends running up a restaurant bill. At the end, it would be fair for them to split the bill according to what they individually ate. It can be seen that this quite naturally translates to the world of model building, where it is important to know what the contribution of each feature was to the final model output. SHAP provides this unified framework.
+Explainability of results is sought through SHAP values. The concept of SHAP (SHapley Additive Explanations) comes from coalitional game theory and were recently incorporated into the field of machine learning \cite{shap_force_plot} \cite{shap}. The idea is to justly allocate credit to each member of a group (or coalition) for achieving a common goal. An easy example to think of might be to think of a group of friends running up a restaurant bill. At the end, it would be fair for them to split the bill according to what they individually ate. It can be seen that this quite naturally translates to the world of model building, where it is important to know what the contribution of each feature was to the final model output. SHAP provides this unified framework.\\
 
-%\subsection{\label{app:model_setup}Experimental Setup}
+
+\section{\label{appdx3}Diagnoses and Medication}
+
+\subsection{\label{app:diag_codes}ICD-10 Codes}
+
+Heart Failure \\
+
+39891, 40200, 40201, 40210, 40211, 40290, 40291, 40400, 40401, 40402, 40403, 40410, 40411, 40412, 40413, 40490, 40491, 40492, 40493, 4280, 4281, 42820, 42821, 42822, 42823, 42830, 42831, 42832, 42833, 42840, 42841, 42842, 42843, 4289, E8726, E8745, I0981, I110, I119, I130, I131, I1310, I1311, I132, I50, I501, I502, I5020, I5021, I5022, I5023, I503, I5030, I5031, I5032, I5033, I504, I5040, I5041, I5042, I5043, I508, I5081, I50810, I50811, I50812, I50813, I50814, I5082, I5083, I5084, I5089, I509, I9713, I97130, I97131, T8622, T8632, Y625\\
+
+Hypertension \\
+
+G932, H4005, H40051, H40052, H40053, H40059, I10, I15, I150, I158, I159, I270, I272, I2720, I2721, I2722, I2723, I2724, I2729, I873, I8730, I87301, I87302, I87303, I87309, I8731, I87311, I87312, I87313, I87319, I8732, I87321, I87322, I87323, I87329, I8733, I87331, I87332, I87333, I87339, I8739, I87391, I87392, I87393, I87399, I973, K766, O10, O100, O1001, O10011, O10012, O10013, O10019, O1002, O1003, O104, O1041, O10411, O10412, O10413, O10419, O1042, O1043, O109, O1091, O10911, O10912, O10913, O10919, O1092, O1093, O11, O111, O112, O113, O114, O115, O119, O12, O13, O131, O132, O133, O134, O135, O139, O16, O161, O162, O163, O164, O165, O169, P292, P2930, R030\\
+
+Obesity\\
+
+E66, E6601, E6609, E661, E662, E668\\
+
+Diabetes\\
+
+E101, E09, E090, E0900, E0901, E091, E0910, E0911, E092, E0921, E0922, E0929, E093, E0931, E09311, E09319, E0932, E09321, E093211, E093212, E093213, E093219, E09329, E093291, E093292, E093293, E093299, E0933, E09331, E093311, E093312, E093313, E093319, E09339, E093391, E093392, E093393, E093399, E0934, E09341, E093411, E093412, E093413, E093419, E09349, E093491, E093492, E093493, E093499, E0935, E09351, E093511, E093512, E093513, E093519, E09352, E093521, E093522, E093523, E093529, E09353, E093531, E093532, E093533, E093539, E09354, E093541, E093542, E093543, E093549, E09355, E093551, E093552, E093553, E093559, E09359, E093591, E093592, E093593, E093599, E0936, E0937, E0937X1, E0937X2, E0937X3, E0937X9, E0939, E094, E0940, E0941, E0942, E0943, E0944, E0949, E095, E0951, E0952, E0959, E096, E0961, E09610, E09618, E0962, E09620, E09621, E09622, E09628, E0963, E09630, E09638, E0964, E09641, E09649, E0965, E0969, E098, E099, E10, E1010, E1011, E102, E1021, E1022, E1029, E103, E1031, E10311, E10319, E1032, E10321, E103211, E103212, E103213, E103219, E10329, E103291, E103292, E103293, E103299, E1033, E10331, E103311, E103312, E103313, E103319, E10339, E103391, E103392, E103393, E103399, E1034, E10341, E103411, E103412, E103413, E103419, E10349, E103491, E103492, E103493, E103499, E1035, E10351, E103511, E103512, E103513, E103519, E10352, E103521, E103522, E103523, E103529, E10353, E103531, E103532, E103533, E103539, E10354, E103541, E103542, E103543, E103549, E10355, E103551, E103552, E103553, E103559, E10359, E103591, E103592, E103593, E103599, E1036, E1037, E1037X1, E1037X2, E1037X3, E1037X9, E1039, E104, E1040, E1041, E1042, E1043, E1044, E1049, E105, E1051, E1052, E1059, E106, E1061, E10610, E10618, E1062, E10620, E10621, E10622, E10628, E1063, E10630, E10638, E1064, E10641, E10649, E1065, E1069, E108, E109, E11, E110, E1100, E1101, E111, E1110, E1111, E112, E1121, E1122, E1129, E113, E1131, E11311, E11319, E1132, E11321, E113211, E113212, E113213, E113219, E11329, E113291, E113292, E113293, E113299, E1133, E11331, E113311, E113312, E113313, E113319, E11339, E113391, E113392, E113393, E113399, E1134, E11341, E113411, E113412, E113413, E113419, E11349, E113491, E113492, E113493, E113499, E1135, E11351, E113511, E113512, E113513, E113519, E11352, E113521, E113522, E113523, E113529, E11353, E113531, E113532, E113533, E113539, E11354, E113541, E113542, E113543, E113549, E11355, E113551, E113552, E113553, E113559, E11359, E113591, E113592, E113593, E113599, E1136, E1137, E1137X1, E1137X2, E1137X3, E1137X9, E1139, E114, E1140, E1141, E1142, E1143, E1144, E1149, E115, E1151, E1152, E1159, E116, E1161, E11610, E11618, E1162, E11620, E11621, E11622, E11628, E1163, E11630, E11638, E1164, E11641, E11649, E1165, E1169, E118, E119, E13, E130, E1300, E1301, E131, E1310, E1311, E132, E1321, E1322, E1329, E133, E1331, E13311, E13319, E1332, E13321, E133211, E133212, E133213, E133219, E13329, E133291, E133292, E133293, E133299, E1333, E13331, E133311, E133312, E133313, E133319, E13339, E133391, E133392, E133393, E133399, E1334, E13341, E133411, E133412, E133413, E133419, E13349, E133491, E133492, E133493, E133499, E1335, E13351, E133511, E133512, E133513, E133519, E13352, E133521, E133522, E133523, E133529, E13353, E133531, E133532, E133533, E133539, E13354, E133541, E133542, E133543, E133549, E13355, E133551, E133552, E133553, E133559, E13359, E133591, E133592, E133593, E133599, E1336, E1337, E1337X1, E1337X2, E1337X3, E1337X9, E1339, E134, E1340, E1341, E1342, E1343, E1344, E1349, E135, E1351, E1352, E1359, E136, E1361, E13610, E13618, E1362, E13620, E13621, E13622, E13628, E1363, E13630, E13638, E1364, E13641, E13649, E1365, E1369, E138, E139, N251, O240, O2401, O24011, O24012, O24013, O24019, O2402, O2403, O241, O2411, O24111, O24112, O24113, O24119, O2412, O2413, O243, O2431, O24311, O24312, O24313, O24319, O2432, O2433, O244, O2441, O24410, O24414, O24415, O24419, O2442, O24420, O24424, O24425, O24429, O2443, O24430, O24434, O24435, O24439, O248, O2481, O24811, O24812, O24813, O24819, O2482, O2483, O249, O2491, O24911, O24912, O24913, O24919, O2492, O2493, P700, P702, R7303, Z131, Z833, Z8632\\
+
+Medication\\
+
+\begin{table*}
+  \centering
+\begin{tabular}{|p{4cm}|p{7cm}|}
+\hline
+\textbf{Type} & \textbf{Medication Name}\\
+\hline
+Calcium channel blocker & nifedipine, nisoldipine, verapamil, amlodipine, diltiazem, felodipine, isradipine, nicardipine\\
+\hline
+ARB & losartan, olmesartan, telmisartan, valsartan, azilsartan, candesartan, eprosartan, irbesartan\\
+\hline
+ACE inhibitor & lisinopril, moexipril, perindopril, quinapril, ramipril, trandolapril, benazepril, captopril, enalapril, fosinopril\\
+\hline
+beta blocker & bisoprolol, metoprolol, nadolol, nebivolol, propranolol, atenolol, acebutolol\\
+ \hline
+  \end{tabular}
+  \caption[Medication]{Instances of patients being administered these medicines are included in the model(s).}
+  \label{tab:meds}
+\end{table*}
+
+\subsection{\label{app:model_setup}Miscellaneous}
+For the experiments involving Time-Invariant or Time-Variant models, here are the configurations:
+\begin{itemize}
+\item Optimizer - Adam
+\item Early Stopping - with patience 20; Refer Table \ref{tab:eval}
+\item Train-Test-Validation Split - 0.6:0.2:0.2
+\end{itemize}
+
+
 %Optimizer, Early Stopping (Callback), Train Test Split, LR, Epochs, Covariates - comorbidities ICD codes, HF ICD codes
 %CNN
 
