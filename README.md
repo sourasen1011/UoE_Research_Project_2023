@@ -4,7 +4,7 @@ Repository to store all work done on M.Sc. Data Science dissertation
 
 The main modules are contained within nn_survival_analysis. The two proposed models - Time-Invariant and Time-Variant have their own .py files within this directory. Other traditional models as well as neural network models also have their own .py files here.
 
-The config.json file contains all the hyperparameters for training, testing and evaluating.
+The nn_survival_analysis directory also contains a config.json file, which contains all the hyperparameters for training, testing and evaluating.
 
 For the paper, go to the presentations/my_thesis/01 folder. Find the thesis.pdf file.
 
