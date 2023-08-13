@@ -30,9 +30,9 @@ from torch.utils.data import Dataset, DataLoader
 # np.random.seed(123)
 # random_state = 123
 
-# Add the outer directory
-sys.path.append('../')
-from eval_surv_copy import EvalSurv
+# Add the evals outer directory
+sys.path.append('../evals')
+from evals.eval_surv_copy import EvalSurv
 
 #_______________________________________________________________________________________________
 # Reusable Functions
