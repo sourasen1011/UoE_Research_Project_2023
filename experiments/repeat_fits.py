@@ -6,7 +6,7 @@ sys.path.append('../nn_survival_analysis')
 from nn_survival_analysis.run_fitters import run_fitters
 
 # define func for looped fitting
-def repeat_fits(iter , verbose):
+def repeat_fits(iter , data_folder_path , verbose):
     '''
     iter: how many times will the model(s) be fit
     '''
@@ -23,7 +23,9 @@ def repeat_fits(iter , verbose):
     
     for i in range(iter):
         print(f"Running experiment iteration {i+1}")
-        eval_dict = run_fitters(config_file_path =  '../nn_survival_analysis/config.json', verbose = verbose)
+        eval_dict = run_fitters(config_file_path =  '../nn_survival_analysis/config.json', 
+                                data_folder_path = data_folder_path , 
+                                verbose = verbose)
         # print(eval_dict)
         for model in eval_dict:
             for eval_metric in eval_dict[model]:
@@ -41,7 +43,7 @@ def main():
     args = parser.parse_args()
 
     # get results
-    res = repeat_fits(args.iter , args.verbose)
+    res = repeat_fits(iter = args.iter , data_folder_path = '../data/' , verbose = args.verbose)
 
     # get ending time
     end_time = time.time()
