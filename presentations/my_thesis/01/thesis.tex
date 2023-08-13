@@ -19,22 +19,29 @@
 %  4)  latex apssamp.tex
 %
 \documentclass[%
+ twocolumn,
  reprint,
  amsmath,amssymb,
  aps,nofootinbib
 ]{revtex4-2}
 
+%{article}
+%{revtex4-2}
+
 \usepackage{graphicx}% Include figure files
 \usepackage{dcolumn}% Align table columns on decimal point
 \usepackage{bm}% bold math
 \usepackage{amsthm}%theorems and stuff
+\usepackage{amsmath} %for align env
 \usepackage[ruled,lined]{algorithm2e}
-\usepackage{svg}
 \usepackage{float}
 \usepackage{hyperref}
 \usepackage{enumitem}
 \usepackage{amsfonts}
 \usepackage{dsfont}
+%\usepackage{multicol} % multi col env
+%\usepackage[margin=0.5in]{geometry} % Adjust the margin values as needed
+
 %\usepackage{svg-inkscape}
 %\usepackage[inkscapeformat=png]{svg}
 \hypersetup{
@@ -44,7 +51,8 @@
 \setlength\parindent{0pt} % zero indent
 \renewcommand\thesection{\arabic{section}} % for arabic numerals
 \setcounter{secnumdepth}{3} % for arabic numerals
-\restylefloat{figure}
+\restylefloat{figure} % figure related things
+\newcommand\numberthis{\addtocounter{equation}{1}\tag{\theequation}} % so i can choose which eq to number. Ref: David Carlisle https://tex.stackexchange.com/questions/42726/align-but-show-one-equation-number-at-the-end
 
 \begin{document}
 
@@ -61,11 +69,25 @@
 \date{July, 2023}% It is always \today, today,
              %  but any date may be explicitly specified
 
+
+%\begin{multicols}{1} % start multi col layout
+%\onecolumngrid % Switch to one-column layout for the abstract
+
 \begin{abstract}
-The study aims to compare the performance of Deep Learning (DL) architectures for predicting mortality in heart failure (HF) patients, against traditional survival analysis techniques. The aim is to see if combining unsupervised and supervised learning can help estimate survival probabilities based on contextual and historic features from clinical data, and how these predictions perform against traditional techniques. By leveraging longitudinal patient data made available in the form of Electronic Health Records (EHR), an examination of the performance of machine learning risk prediction models is conducted against conventional survival analysis in HF patients. The findings may have important implications for clinical practice, healthcare resource allocation, and future research in risk prediction modeling for HF patients with frailty.
+The study aims to compare the performance of Deep Learning (DL) architectures for predicting mortality in heart failure (HF) patients, against traditional survival analysis techniques. The aim is to see if deep learning can help estimate survival probabilities based on contextual and historic features from clinical data, and how these predictions perform against traditional techniques. By leveraging longitudinal patient data from Electronic Health Records (EHR), an examination of the performance of machine learning risk prediction models is conducted against conventional survival analysis in HF patients. The findings may have important implications for clinical practice, healthcare resource allocation, and future research in risk prediction modeling for HF patients.
 \end{abstract}
 
+
 \maketitle
+
+%\tableofcontents
+%\listoffigures
+%\listoftables
+%\newpage
+
+
+%\end{multicols}
+
 
 \section{\label{intro}Introduction}
 Heart failure is a clinical syndrome interfering with the heart's ability to pump blood, leading to a reduction in systemic circulation performance. This condition is widespread globally - as of 2017, approximately 64 million people worldwide are estimated to be affected by heart failure \cite{hf_prevalence}. Hence, accurately predicting risk is crucial for improving patient outcomes.\\
@@ -79,62 +101,35 @@ Deep learning methods in conjunction with classical machine learning, have recen
 
 Personalized predictive modeling is investigated in \cite{suo2017personalized}, which aims to build specific models for individual patients using similar patient cohorts to capture their specific characteristics. According to this study, although CNNs have shown promise on measuring patient similarity, one disadvantage is that they could not utilize temporal and contextual information of EHRs. To measure patient similarity using EHRs, the authors proposed a time-fusion CNN framework. A vector representation was generated for each patient, which was then utilized for measuring patient similarity and personalized disease prediction. Dynamic updates to a CNN model are explored in \cite{brand2018real} as more data is gathered over time - this architecture lends itself well to real-time mortality risk prediction. Maintaining interpretability across deep learning models is explored in \cite{caicedo2019iseeu}.\\
 
-Extensions to the classical Cox proportional hazards model were first proposed in \cite{faraggi_simons} and later in \cite{deepsurv}. More complex architectures like RNNs were applied to ingest time-varying patient data anad generate risk scores in \cite{rnn_surv}. Discrete time survival predictions were addressed in \cite{kvamme_tte}, \cite{nagpal_deep_2021} and \cite{deephit}. This study aims to consider incidences as time-to-event to enable  probabilistic risk prediction for mortality. The use of EHR such as those available in CPRD, allows access to comprehensive longitudinal data, which captures the entire cycle of a host of medical factors such as patients' diagnosis and treatment.
+Extensions to the classical Cox proportional hazards model were first proposed in \cite{faraggi_simons} and later in \cite{deepsurv}. More complex architectures like RNNs were applied to ingest time-varying patient data anad generate risk scores in \cite{rnn_surv}. Discrete time survival predictions were addressed in \cite{kvamme_tte}, \cite{nagpal_deep_2021} and \cite{deephit}. This study aims to consider incidences as time-to-event to enable  probabilistic risk prediction for mortality. The use of EHR such as those available in MIMIC-IV, allows access to comprehensive longitudinal data, which captures the entire cycle of a host of medical factors such as patients' diagnosis and treatment.
 
 \section{\label{surv}Survival Analysis}
 \subsection{\label{surv_basics}Basics}
 Survival analysis deals with the estimation of a survival distribution representing the probability of an event of interest, typically a failure, to occur beyond a certain time in the future \cite{nagpal_deep_2021}. One way to specify the survival distribution is through the survival function. The survival function defines the probability of surviving till point t \cite{Moore_2016}.
-\[
-S(t) = P(T>t), \ 0 < t <  \infty
-\]
+\begin{align}
+S(t) = P(T>t), \ 0 < t <  \infty \label{eq:surv}
+\end{align}
 It can be thought of as the complement of the cumulative distribution function $F(t)$.
-\[
-S(t) = P(T>t) = 1 - P(T\le t) = 1 - F(t), \ 0 < t <  \infty
-\]
-Another way to specify the survival distribution is through the hazard function, which denotes the instantaneous rate of failure.
-\[
-h(t) = \lim_{\delta\to0}\frac{P(t<T<t+\delta|T>t)}{\delta}
-\]
-For the continuous-time scenario, the hazard function and survival function are related as follows. 
+\begin{align}
+S(t) = P(T>t) = 1 - P(T\le t) = 1 - F(t), \ 0 < t <  \infty \label{eq:inv_cum_dist}
+\end{align}
+
+Another way to specify the survival distribution is through the hazard function, which denotes the instantaneous rate of failure. For the continuous-time scenario, the hazard function and survival function are related as follows. 
 \begin{gather*}
 f(t) = \frac{d}{dt}F(t) = -\frac{d}{dt}S(t)\\
-h(t) = \frac{f(t)}{S(t)} 
+h(t) = \frac{f(t)}{S(t)} \numberthis \label{eq:haz_pmf_surv}
 \end{gather*}
-where $f(t)$ is the probability mass function (PMF). This says that the hazard is the probability of the subject experiencing an event at time t, provided that the subject is alive till time t. It can be further simplified as
-\begin{gather*}
-h(t) = -\frac{d}{dt}S(t)\frac{1}{S(t)}\\
-\implies S(t) = exp\left (- \int_{0}^{t}h(u)du\right)
-\end{gather*}
-This relationship produces the survival function from a corresponding hazard function \cite{Moore_2016}.
-\[
-H(u) = \int_{0}^{t}h(u)du
-\]
-is known as the cumulative hazard, which is also extensively studied throughout the literature.\\
+
+where $f(t)$ is the probability mass function (PMF). This says that the hazard is the probability of the subject experiencing an event at time t, provided that the subject is alive till time t. \\
 
 \subsection{\label{trad_fits}A Brief Review of Traditional Fitters}
 In the context of continuous time survival models, the Cox Proportional Hazards model has long been the `gold-standard' for survival analysis \cite{cph}. As seen in \cite{deepsurv}, extensions have been made for Cox models to learn non-linear hazards (although the proportional hazards assumption remains). The assumption of a proportional hazards model is that the covariates have a multiplicative effect on the hazard.
-\[
-h(t|x) = h_0(t)e^{w^Tx}
-\]
+\begin{gather*}
+h(t|x) = h_0(t)e^{w^Tx} \numberthis  \label{eq:prop_haz}
+\end{gather*}
 where $h_0$ is called as the baseline hazard.\\
 
-Proportional hazards models are learned by optimizing Cox’s partial likelihood in classical survival analysis \cite{raykar_cindex}. A general formulation is derived as follows \cite{Moore_2016}. Consider failure time $t_i$. The set of all subjects in the trial “at risk” for failure at this time is denoted by $j:Y_j>Y_i$, where $Y$ denotes the observed survival time. The probability of patient $i$ failing at this time is 
-\[
-L_i = \frac{h(t_i | x_i)}{\sum^{}_{j:Y_j>Y_i}h(t_i|x_j)}
-\]
-where $h(t|x)$ denotes the hazard for patient with covariates $x$ at time $t$. The likelihood of the entire cohort is thus,
-\[
-L = \prod^{}_{i:C_i=1}L_i = \prod^{}_{i:C_i=1}\frac{h(t_i | x_i)}{\sum^{}_{j:Y_j>Y_i}h(t_i|x_j)}
-\]
-where $C_i=1$ denotes an observed (uncensored) event. The assumption of a proportional hazards model reduces this to
-\[
-L = \prod^{}_{C_i=1}\frac{e^{w^Tx_i}}{\sum^{}_{j:Y_j>Y_i}e^{w^Tx_j}}
-\] 
-It is noted that the baseline hazard $h_0$ is canceled from both the numerator and the denominator \cite{raykar_cindex}. The log likelihood therefore becomes
-\[
-\ell = \sum^{}_{i:C_i=1} \Bigg( w^Tx_i - log\sum^{}_{j:Y_j>Y_i}e^{w^Tx_j}\Bigg)
-\]
-Interestingly, this negative of this log-likelihood is used as the loss function for DeepSurv and the Faraggi-Simon net.\\
+Proportional hazards models are learned by maximizing Cox’s partial likelihood in classical survival analysis \cite{raykar_cindex}. An expanded formulation is provided in Appendix \ref{app:part_lik}.\\
 
 Accelerated failure time models are a popular parametric alternative to the Cox PH model \cite{aft}. They are especially handy in discriminating between groups where the survival times of one can be uniformly shifted backward to forward to get the survival times of another. Unlike Cox PH model, where the baseline hazard is unspecified, AFT models directly model the survival times \cite{aft_2009}.\\
 
@@ -147,7 +142,7 @@ Before moving to the discrete setting, some formal notation for the data is intr
 For hazard and survival calculation in a discrete-time setting, the following formulation from \cite{kvamme_continuous_2019} is presented. Let $\mathbb{T} = \{\tau_1, \tau_2, \ldots\ \}$ denote the timestamps, i.e. the indices of the discrete times corresponding to different subjects in the data. The event timestamp is $T*\in\mathbb{T}$. The definitions of PMF and survival function follow as
 \begin{gather*}
 f(\tau_j) = P(T* = \tau_j),\\
-S(\tau_j) = P(T* >\tau_j) = \sum_{k>j}f(\tau_k)
+S(\tau_j) = P(T* >\tau_j) = \sum_{k>j}f(\tau_k) \numberthis  \label{eq:surv_pmf}
 \end{gather*}
 It can be seen that the hazard at time $\tau_j$ $h(\tau_j)$, is just the probability of an event happening at time $\tau_j$, given the subject has survived till the previous time step $\tau_{j-1}$. 
 \begin{align}
@@ -166,83 +161,38 @@ S(\tau_j) = \prod_{k=1}^{j}(1 - h(\tau_k)) \label{eq:cum_haz}
 
 Equation \ref{eq:cum_haz} will be useful in later derivations. Now, coming to likelihoods, if there were no censoring involved, the likelihood of observing $n$ failures (events) is of the form
 \[
-L(t_1 , t_2 , \ldots , t_n) = f(t_1)f(t_2)\ldots f(t_n)=\prod^{n}_{i=1}f(t_i)
+L(t_1 , t_2 , \ldots , t_n) = f(t_1)f(t_2)\ldots f(t_n)=\prod^{n}_{i=1}f(t_i) \numberthis  \label{eq:likelihood_no_censor}
 \]
 As per \cite{Moore_2016}, for an observed event, the pdf is retained. But for a right-censored observation, it is replaced by the survival function, as that subject is known only to have survived past that time. The likelihood then becomes
 \[
-L(t_1 , t_2 , \ldots , t_n) = \prod^{n}_{i=1}f(t_i)^{\delta_i}S(t_i)^{1-\delta_i}=\prod^{n}_{i=1}h(t_i)^{\delta_i}S(t_i)
+L(t_1 , t_2 , \ldots , t_n) = \prod^{n}_{i=1}f(t_i)^{\delta_i}S(t_i)^{1-\delta_i}=\prod^{n}_{i=1}h(t_i)^{\delta_i}S(t_i) \numberthis  \label{eq:likelihood_censor}
 \]
 
 \subsection{\label{loss}Loss Function(s)}
-The architecture incorporates two loss functions - one being the negative log likelihood of the data \cite{kvamme_continuous_2019}, another being a lower bound on the concordance index \cite{raykar_cindex}.\\
-
-\textbf{Negative Log-Likelihood - hazard function}\\
-The following derivation is taken from \cite{kvamme_continuous_2019}. For notational convenience, let $\kappa(t) \in \{0, \ldots , m\}$ define the index of the discrete time $t$, meaning $t = \tau_{\kappa(t)}$. Thus, the likelihood contribution for individual $i$ is seen to be 
-
-\begin{align*}
-&L_i = f(t_i)^{\delta_i}S(t_i)^{1-\delta_i}\\
-&= [h(t_i)S(\tau_{\kappa(t_i)-1})]^{d_i}][(1-h(t_i))S(\tau_{\kappa(t_i)-1})]^{1-d_i}\\
-&= h(t_i)^{d_i}[1 - h(t_i)]^{1-d_i}S(\tau_{\kappa(t_i)-1})]\\
-&= h(t_i)^{d_i}[1 - h(t_i)]^{1-d_i} \prod^{\kappa_{t_i-1}}_{j=1}[1 - h(\tau_j)]
-\end{align*}
-For all the individuals, the combined log-likelihood is
-\begin{align*}
-L = \prod^{n}_{i=1}L_i = \prod^{n}_{i=1}\Bigg(h(t_i|x_i)^{d_i}[1 - h(t_i|x_i)]^{1-d_i} \\
-\prod^{\kappa_{t_i-1}}_{j=1}[1 - h(\tau_j|x_i)]\Bigg)
-\end{align*}
-From here, the loss function for a batch can be constructed as the negative log likelihood.
-\begin{align*}
-log(L) = \sum^{n}_{i=1}\Bigg(d_i log[h(t_i|x_i)]+(1-d_i)log[1-h(t_i|x_i)]+\\
-\sum^{\kappa(t_i)-1}_{j=1}log[1 - h(\tau_j|x_i)] \Bigg)
-\end{align*}
-To adjust for varying batch sizes, the mean negative log likelihood is taken as the loss.
-\begin{align*}
-\mathcal{L}_{nll} = -\frac{1}{n}\sum^{n}_{i=1}\Bigg(d_i log[h(t_i|x_i)]+(1-d_i)log[1-h(t_i|x_i)]+\\
-\sum^{j=1}_{\kappa(t_i)-1}log[1 - h(\tau_j|x_i)] \Bigg) \\
-= \frac{1}{n}\sum^{n}_{i=1}\sum^{\kappa_{t_i}}_{j=1}(y_{ij}log[h(\tau_j|x_i)]+(1-y_{ij})log[1-h(\tau_j|x_i)])
-\end{align*}
-This can now be minimized by gradient-based methods, thus making it a useful loss function for a neural network to work with. Here, $y_{ij}$ is an indicator variable corresponding to 1 if and only if an event is experienced by the individual $i$ at time $t_j$. Hence, $y$ is a sparse matrix consisting of mostly 0 with 1 only present when the time $t_j$ represents an observed event $d_i = 1$ for individual $x_i$. \\
-
-The loss can be thought of as the negative log likelihood of Bernoulli data $\theta^p(1-\theta)^{1-p}$, where $\theta=h(\tau_j|x_i)$ and $p=y_{ij}$ \cite{bin_x_entropy_brown}, and can be computed using existing functions in the PyTorch library.\\
-
-\textbf{Lower-Bound on C-Index}\\
-The following loss function is taken from \cite{raykar_cindex}. The sigmoid function defined as $\sigma = (1 + e^{-z})^{-1}$ is an approximation to the indicator function $\mathds{1}_{z>0}$. However, it is not a lower bound. For this, the scaled version of its log is taken.
-\begin{gather*}
-\mathds{1}_{z>0} \ge log\ [2\sigma(z)]/log\ 2\\
-\implies \mathds{1}_{z>0} \ge 1 + (log\ \sigma(z)/log\ 2)
-\end{gather*}
-
-For a more rigourous treatment of this inequality, see the original paper \cite{raykar_cindex}. It follows that the lower bound on the concordance index then becomes
-\begin{gather*}
-c = \frac{1}{|\mathcal{E}|}\sum_{i:C_i = 1}\sum_{T_j > T_i} \mathds{1}_{\eta_j > \eta_i}\\
-c \ge \frac{1}{|\mathcal{E}|}\sum_{i:C_i = 1}\sum_{T_j > T_i} 1 +  (log\ \sigma(\eta_j - \eta_i)/log\ 2)
-\end{gather*}
-
-The negative of this lower-bound is chosen to be the loss function, which can therefore be minimized using gradient-based methods (again, with the help of a library like PyTorch).
-\[
-\mathcal{L}_{lbo} = -\frac{1}{|\mathcal{E}|}\sum_{i:C_i = 1}\sum_{T_j > T_i} 1 +  (log\ \sigma(\eta_j - \eta_i)/log\ 2)
-\]
+The architecture incorporates two loss functions - one being the negative log likelihood of the data \cite{kvamme_continuous_2019}, another being a lower bound on the concordance index \cite{raykar_cindex}. For the derivations, see Appendix \ref{app:loss}\\
 
 These two loss functions are linearly combined based on a hyperparameter $\alpha \in [0,1]$ to make the total loss
 \[
-\mathcal{L}_{total} = \alpha\mathcal{L}_{nll} + (1 - \alpha)\mathcal{L}_{lbo}
+\mathcal{L}_{total} = \alpha\mathcal{L}_{nll} + (1 - \alpha)\mathcal{L}_{lbo} \numberthis  \label{eq:l_total}
 \]
 
 \subsection{\label{nn_param}Neural Network Parameterization}
 As hazards are conditional probabilities (see Eq. \ref{eq:haz_cond_proba}), they must lie within $[0,1]$. A handy function for this is the sigmoid non-linearity
 \[
-g(x) = \frac{1}{1+e^{-x}}
+g(x) = \frac{1}{1+e^{-x}} \numberthis  \label{eq:sigmoid}
 \]
 For a neural network taking $x_i$ (the covariates of patient $i$) as input and producing $m$ outputs denoting $m$ discrete timesteps in the patient's journey, applying the sigmoid function effectively transforms the outputs into valid hazards.
 \[
-h(\tau_j|x_i) = g(\phi_j(x_i)) = \frac{1}{1+e^{-\phi_j(x_i)}}
+h(\tau_j|x_i) = g(\phi_j(x_i)) = \frac{1}{1+e^{-\phi_j(x_i)}} \numberthis  \label{eq:nn_param}
 \]
 where $\phi_j(x_i)$ is the output of the neural network at node $j$ corresponding to the hazard function over the time period $[\tau_{j-1}, \tau_j)$.\\
 
 Returning to the problem at hand, for such a parameterization, the continuous time scale $\mathbb{T}$ needs to be discretized into $m$ pieces. A simple way to do this is to equally divide up the set $\mathbb{T}$ into $m$ equal parts. The hazards across these $m$ timesteps can be cumulatively multiplied to find the survival function as seen in Eq. \ref{eq:cum_haz}. 
 
 \section{\label{UQ_explain}Uncertainty Quantification and Explainability}
-An addition this work attempts to make to the above is by introducing a layer of uncertainty quantification via Monte-Carlo dropout \cite{mcdropout}. Dropout was originally introduced in 2014 \cite{dropout} as a method to intorduce regularization into neural networks by randomly dropp units along with their connections. This prevents units from co-adapting too much, thereby forcing their neighbours to `learn' the signal in a more `robust' fashion. Dropout is generally reserved for training as a means to enforce regularization on the network. Libraries like PyTorch allow users to prime networks for training or evaluation. When applied during the testing or prediction phase as well, a probability distribution of the output is created, allowing for probabilistic inference instead of point inference as present in regular neural networks. Over many iterations, this essentially means that the network used for prediction is slightly different each time, resulting in slightly different outputs - thereby allowing users to generate a probability distribution of outputs.\\
+Dropout was originally introduced in 2014 \cite{dropout} as a method to intorduce regularization into neural networks by randomly dropp units along with their connections. This prevents units from co-adapting too much, thereby forcing their neighbours to `learn' the signal in a more `robust' fashion. Dropout is generally reserved for training as a means to enforce regularization on the network. Libraries like PyTorch allow users to prime networks for training or evaluation.\\
+
+An addition this work attempts to make to the above is by introducing a layer of uncertainty quantification via Monte-Carlo dropout \cite{mcdropout}. When applied during the testing or prediction phase as well, a probability distribution of the output is created, allowing for probabilistic inference instead of point inference as present in regular neural networks. Over many iterations, this essentially means that the network used for prediction is slightly different each time, resulting in slightly different outputs - thereby allowing users to generate a probability distribution of outputs.\\
 
 Being uncertainty-aware ties in with the idea of interpretability of modern deep learning methods, which is often a barrier towards the adoption of such methods into highly regulated industries such as finance or medicine. SHAP (SHapley Additive exPlanations) values \cite{shap}, extended from the field of cooperative game theory provide a unified, model-agnostic method to explain the contributions of covariates to a model's output.
 
@@ -252,7 +202,7 @@ This study attempts to model survival functions from both a time-invariant persp
 \subsection{\label{time_invar_arch}Time-Invariant}
 The simpler time-invariant version of the architecture is a multi-layer perceptron (MLP), otherwise referred to as a fully-connected neural network. Consider a batch of input covariates $x \in \mathbb{R}^{n\times d}$, where $n$ is the batch size and $d$ is the number of input covariates. The basic architecture is as outlined in Table \ref{tab:arch1}.\\
 
-\begin{table}[h]
+\begin{table}[H]
   \centering
   \begin{tabular}{|c|c|}
     \hline
@@ -269,7 +219,7 @@ The simpler time-invariant version of the architecture is a multi-layer perceptr
     Dense (nn.Linear) & ($h, m$) \\
     \hline
   \end{tabular}
-  \caption{General Architecture - Time-Invariant}
+  \caption[General Architecture Time-Invariant]{General Architecture - Time-Invariant}
   \label{tab:arch1}
 \end{table}
 
@@ -281,7 +231,7 @@ Here, $m$ is the output size, denoting the number of discretized time indices ac
 First, a patient image is built for each subject in the dataset. Consider a batch of input covariates $x \in \mathbb{R}^{n\times t_s \times d}$, where $t_s$ is the number of time-steps along the subjects' journey(s). $n$ and $d$ retain their meaning from earlier. \\
 
 A convolutional neural network is used to identify patterns in the patient-image, whose outputs are then fed into a fully-connected network. The architecture is elaborated in Table \ref{tab:arch2}.
-\begin{table}[h]
+\begin{table}[H]
   \centering
   \begin{tabular}{|c|c|}
     \hline
@@ -303,9 +253,10 @@ A convolutional neural network is used to identify patterns in the patient-image
     Dense (nn.Linear) & ($h, m$) \\
     \hline
   \end{tabular}
-  \caption{General Architecture - Time-Variant}
+  \caption[General Architecture Time-Variant]{General Architecture - Time-Variant}
   \label{tab:arch2}
 \end{table}
+Here, kernel\_size = 3, stride = 1 and padding = 1.
 
 \section{\label{data}Dataset}
 The study uses the large publicly available database MIMIC-IV \cite{mimic_iv}, which consists of critical care data from hospital and ICU admissions for almost 300,000 patients admitted to intensive care units at the Beth Israel Deaconess Medical Center (BIDMC). For a more thorough treatment of the data, see \href{https://physionet.org/content/mimiciv/2.2/}{MIMIC-IV website}.
@@ -321,26 +272,29 @@ Patients' earliest admission time is considered as their `start' date. If their 
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.5\textwidth]{cohort_hist.pdf}
-  \caption{Cohort-wise Histogram}
+  \caption[Cohort-wise Histogram]{Cohort-wise Histogram showing Censored vs. Uncensored subjects}
   \label{fig:cohort_hist}
 \end{figure}
 
 \subsection{\label{censoring}Data Standardization}
 Patients are randomly distributed into train, test and validation pools. Columns with zero variance in the training data are discarded from all three datasets - train, test and validation. Across each pool, their survival time is discretized into $q=15$ buckets or time intervals. For example, a patient whose survival time belongs to the $j^{th}$ bucket has experienced the event (or been censored) between the time interval $[q_j, q_{j+1})\ \forall j \in [1,2,\cdots,m]$.\\
 
-For the time-invariant version, simple pipelines for imputation and scaling are carried out. For the time-varying version, the process is slightly more involved. First, a patient-level cumulative time difference column is introduced, to keep track of when medications or test were administered - for every patient, this column starts with 0. Next, a null mask $\mathcal{M}$ is created.
+For the time-invariant version, simple pipelines for imputation and scaling are carried out. For the time-varying version, the process is slightly more involved. First, a patient-level cumulative time difference column is introduced, to keep track of when medications or test were administered - for every patient, this column starts with 0. \\
 
+Next, a null mask $\mathcal{M}$ is created, as in \cite{deephit}. As neural networks cannot natively handle missing data, the matrices need to be imputed (strategies will be discussed later). However, it can be reductive to ignore the fact that some data is missing in the original dataset. Therefore, a compromise is reached by creating a null mask before imputing the missing values. This null mask is then appended to the dataset before being fed to the neural network. The expectation is for the network to consider imputed values as missing when their corresponding mask element $\mathcal{M}_{idj}=0$, denoting the $j^{th}$ observation of covariate $d$ for patient $i$ is missing.\\
+
+As convolutional neural networks expect input of the same shape, the patient images need to be quantized to have the same width \footnote{This is already done as all the patients have the same number of covariates.} and the same height. The latter is achieved by sampling the multivariate time series data at set points during the patients history. For this study, a patient's history is divided into 10 equal parts, and all their covariates are interpolated over these divisions. Finally each column is normalized as per the L2 norm. Finally, they are reshaped to be fed into a PyTorch CNN model.
 
 \section{\label{metrics}Evaluation Metrics}
 As survival analysis differs from ordinary linear regression in the aspect that not all the survival times are known (right-censoring), there is merit in reviewing the evaluation metrics for this task. The two metrics used in the experimental setup are the time-dependent concordance index (in favour of the regular concordance index) and the Brier score (along with its aggregated version, the integrated Brier score).
 
 \subsection{\label{tdci}Time-Dependent Concordance Index ($td$-concordance index)}
-The C-index, often referred to as ``Harrell's C-Index'' or simply as the C-statistic is a measure of the discriminative capacity of a model. In essence, it is the generalization of the ROC (Receiver Operator Characteristic) curve - AUC in a survival analysis setting <Rephrase??> \cite{Uno_Cai_Pencina_D’Agostino_Wei_2011} \cite{pysurv}. The formula for the c-index is given as
+The C-index, often referred to as `Harrell's C-Index' or simply as the C-statistic is a measure of the discriminative capacity of a model. In essence, it is the generalization of the area under the ROC (Receiver Operator Characteristic) curve in a survival analysis setting \cite{Uno_Cai_Pencina_D’Agostino_Wei_2011} \cite{pysurv}. The formula for the c-index is given as
 %\[
 %C-index = \frac{\sum_{i,j} \mathds{1}_{T_j < T_i}\cdot \mathds{1}_{\eta_j > \eta_i}\cdot d_j}{\sum_{i,j} \mathds{1}_{T_j < T_i}\cdot d_j}
 %\]
 \[
-c = \frac{1}{|\mathcal{E}|}\sum_{i:C_i = 1}\sum_{T_j > T_i} \mathds{1}_{\eta_j > \eta_i}
+c = \frac{1}{|\mathcal{E}|}\sum_{i:C_i = 1}\sum_{T_j > T_i} \mathds{1}_{\eta_j > \eta_i} \numberthis  \label{eq:tdci}
 \]
 where $\eta_i$ denotes the predicted survival time for subject $i$. As c-index is rank-based index, it can be substituted with the survival probability of subject $i$ as well. $|\mathcal{E}|$ is the number of pairs that \textit{can} be compared.\\
 
@@ -359,104 +313,330 @@ There are limitations with the traditional c-index as highlighted by \cite{Hartm
 
 Contrasting the discriminatory power of the C-index, the Brier score provides a measure of how well the model is calibrated. It represents the distance between observed and predicted survival probability - hence 0 is the most desirable value. Given the data, $\mathcal{D}$, a set of tuples $\{(x_i , t_i , d_i)\}_{i=1}^{N}$ and the predicted survival function $\hat{S}(t, x_i),\ \forall t \in \mathbb{R^{+}}$, the Brier score (without right-censored observations) assumes a form similar to the mean-squared-error.
 \[
-BS(t) = \frac{1}{N}\sum^{N}_{i=1}(\mathbb{I}_{T_i>t}-\hat{S}(t, x_i))^2
+BS(t) = \frac{1}{N}\sum^{N}_{i=1}(\mathbb{I}_{T_i>t}-\hat{S}(t, x_i))^2 \numberthis  \label{eq:bs}
 \]
 
-With the occurence of right-censored data, the formula needs to be adjusted by the inverse probability of censoring weights method <cite?>. Let $\hat{G}(t) = P[C>t]$ be the estimator of the conditional survival function of the censoring times calculated using the Kaplan-Meier method, where C is the censoring time.
+With the occurence of right-censored data, the formula needs to be adjusted by the inverse probability of censoring weights method \cite{graf_bs}. Let $\hat{G}(t) = P[C>t]$ be the estimator of the conditional survival function of the censoring times calculated using the Kaplan-Meier method, where C is the censoring time.
 
-\begin{gather*}
+\begin{align*}
 BS(t) = \frac{1}{N}\sum^{N}_{i=1}\Bigg(\frac{(0-\hat{S}(t,x_i))^2 \cdot \mathbb{I}_{T_i\le t, d_i = 1}}{\hat{G}(T_i)} +\\
-\frac{(1-\hat{S}(t,x_i))^2 \cdot \mathbb{I}_{T_i > t}}{\hat{G}(t)} \Bigg)
-\end{gather*}
+\frac{(1-\hat{S}(t,x_i))^2 \cdot \mathbb{I}_{T_i > t}}{\hat{G}(t)} \Bigg) \numberthis  \label{eq:bs_ipcw}
+\end{align*}
 
-An aggregated version of this score provides a simpler (albeit more reductive) summary of the calibration of a model.
+An aggregated version of this score provides a simpler summary of the calibration of a model.
 \[
-IBS(t_{max})= \int^{t_{max}}_{0} BS(t) dt
+IBS(t_{max})= \frac{1}{t_{max}} \int^{t_{max}}_{0} BS(t) dt \numberthis  \label{eq:ibs}
 \]
 
 \section{\label{exp}Experiments and Fits}
-A series of experiments were conducted on this data from both a time-invariant and a time-varying perspective. The  survival distributions were examined with non-parametric fitters - Kaplan-Meier fitter and Nelson-Aalen fitter. A short write-up on these methods can be found in the Appendix \ref{appdx}. \\
+A series of experiments  were conducted on this data from both a time-invariant and a time-varying perspective. The  survival distributions were first examined with a non-parametric fitter, the Kaplan-Meier fitter (see: Figure \ref{fig:km_curve}). A short write-up on these methods can be found in the Appendix \ref{appdx}. All relevant code for this study can be found on \href{https://github.com/sourasen1011/UoE_Research_Project_2023/tree/dev}{github}.\\
 
-Next, a range of parametric, semi-parametric, tree-based and neural network-based methods were applied to the data and their evaluation criteria noted. To establish confidence intervals on said criteria, fits were run multiple times - all time-invariant models apart from Cox Proportional Hazards model and Weibull Accelerated Failure Time model were run 20 times. The model allowing for time-varying data was run 10 times. Thus, distributions of their cindex and integrated Brier scores were generated. The details are listed in Table \ref{tab:eval}.\\
-
-\begin{table*}[t]
+\begin{figure}[H]
   \centering
-  \begin{tabular}{|p{4cm}|p{6cm}|p{2cm}|p{2cm}|}
+  \includegraphics[width=0.5\textwidth]{km_curve.pdf}
+  \caption[KM curve]{Kaplan-Meier curve of Survival for entire cohort}
+  \label{fig:km_curve}
+\end{figure}
+
+Next, a range of parametric, semi-parametric, tree-based and neural network-based methods were applied to the data and their evaluation criteria noted. To establish confidence intervals on said criteria, fits were run multiple times - all time-invariant models apart from Cox Proportional Hazards model and Weibull Accelerated Failure Time model were run 20 times. The model allowing for time-varying data was run 10 times. Thus, distributions of their cindex and integrated Brier scores were generated. \\
+
+One of the earlier aims of this study was to see if hybrid deep learning, that is the supplementation of deep learning with classical machine learning techniques would yield better performance compared to traditional techniques. In that light, although methods such as clustering and PCA are introduced into the pipeline, the highest discriminatory power (comparable to traditional methods) is generally observed if the data is directly fed into the neural network(s). Due to this shortcoming, the time-variant version has not been equipped with any clustering utility as opposed to its time-invariant counterpart. Some tests were carried out to see the effect of having multiple clusters and preprocessing the data with PCA. Details are in Table \ref{tab:eval_degrad}.
+
+\begin{table}
+  \centering
+  \begin{tabular}{|p{2cm}|p{3cm}|p{1.4cm}|p{1cm}|}
      \hline
-    \textbf{Model} & \textbf{HyperParameters} & \textbf{C-Index} & \textbf{IBS} \\
+    \textbf{Extension} & \textbf{Hyperparameters} & \textbf{C-Index} & \textbf{IBS} \\
     \hline
-    Cox Proportional Hazards & penalizer = 0.1, step\_size = 0.1 & 0.6808 & 0.1685\\
+    Clustering & clusters = 1 & 0.6957 & 0.3995 \\
     \hline
-    Weibull AFT & penalizer = 0.01  & 0.6804 & 0.1748\\
+    Clustering & clusters = 2 & 0.6857 & 0.4075 \\
     \hline
-    Random Survival Forest & n\_estimators=1000, min\_samples\_split=10, min\_samples\_leaf=15, n\_jobs=-1, random\_state=1234, oob\_score = True  & 0.6975 & 0.1956\\
+    Clustering & clusters = 3 & 0.6786 & 0.3915 \\
     \hline
-    PyCox (with Logistic Hazard loss function \cite{kvamme_continuous_2019}) & discretization=15, layers=[256,256],  batch\_norm=True, dropout=0.5, batch\_size=256, epochs=500 & 0.5974 & 0.1768\\
+    Clustering & clusters = 4 & 0.6724 & 0.4108 \\
     \hline
-    Deep Survival Machhines & k=6, distribution=LogNormal, learning\_rate=1e-3, layers=[100, 100] & 0.6441 & 0.2724\\
+    Clustering & clusters = 5 & 0.6703 & 0.4141 \\
     \hline
-    DeepSurv & batch\_size=256, num\_epochs=1000, learning\_rate=0.01, patience=50, hidden\_size=100, 
-droutput\_rate = 0.1 & 0.4259 & - \\    
+    PCA & n\_components = 1 & 0.4891 & 0.4147\\
     \hline
-    Time-Invariant Survival & clusters=1, discretizations = 15, hidden\_size = 25 , alpha = 0.05 , batch\_size=256, num\_epochs=400, learning\_rate=0.001, patience=20, dropout\_rate = 0.5, mc\_iter = 100 & - & - \\
+    PCA & n\_components = 2 & 0.5071 & 0.4127\\
     \hline
-    Time-Variant Survival & discretizations = 15, hidden\_size = 25 , alpha = 0.01 , batch\_size=256, num\_epochs=100, learning\_rate=0.001, patience=20, dropout\_rate = 0.5, mc\_iter = 100  & - & - \\
+    PCA & n\_components = 5 & 0.4927 &  0.4133\\
+    \hline
+    PCA & n\_components = 10 & 0.4826 & 0.4049\\
+    \hline
+    Clustering \& PCA & clusters = 2 , n\_components = 2& 0.5103 & 0.4131\\
     \hline
   \end{tabular}
-  \caption{Evaluation metrics}
-  \label{tab:eval}
-\end{table*}
+  \caption[Evaluation Metrics]{Evaluation metrics - Degradation with extensions. Note these metrics were collected on one specific run. Reruns may yield slightly different results}
+  \label{tab:eval_degrad}
+\end{table}
+
+The details of experiments comparing the two architectures with other off-the-shelf methods are listed in Table \ref{tab:eval}. It is noted that although the upper bound for the time-invariant method is above that of the traditional statistical fitters (CPH and AFT), its mean is below theirs. The time-variant counterpart seems to comfortably beat all other methods in terms of c-index (discriminative power) but both methods have quite a large Brier score (calibration) in comparison to off-the-shelf methods. The Figures \ref{fig:cindex} and \ref{fig:ibs} showcase this situation.\\
 
 
-\section{\label{conc}Conclusions}
-The architecture is sacrificing calibration for discriminatory power. The figures \ref{fig:cindex} and \ref{fig:ibs} showcase this situation.
-
-\begin{figure*}[t]
+\begin{figure*}
   \centering
   \includegraphics[width=\textwidth]{cindex_score_dist_plot.pdf}
-  \caption{Distribution of C-index}
+  \caption[C-Index distribution]{Distribution of C-index - Time-Variant version run for 10 iterations. All others run for 20 iterations.}
   \label{fig:cindex}
 \end{figure*}
 
 
-\begin{figure*}[t]
+\begin{figure*}
   \centering
   \includegraphics[width=\textwidth]{ibs_score_dist_plot.pdf}
-  \caption{Distribution of IBS}
+  \caption[IBS distribution]{Distribution of IBS - Time-Variant version run for 10 iterations. All others run for 20 iterations.}
   \label{fig:ibs}
 \end{figure*}
 
-\section{\label{morework}Further Work}
-Other neural network methods capable of temporal learning (forms of RNN) can be applied to this problem to see if the discriminative power can be increased.
+This implementation is equipped with a wrapper for the Python library \texttt{shap} which allows explanation of particular observations. SHAP allows the introduction of a notion of an `expected' \footnote{In the literature, expected survival generally refers to the mean or median survival time and not a time-varying metric.} survival curve, which can be compared against baseline survival of traditional fitters and the empirical survival distribution from non-parametric fitters such as the Kaplan-Meier fitter. Figure \ref{fig:comparing_surv_curve} shows this.\\
 
-\cite{*}
+\begin{figure*}
+  \centering
+  \includegraphics[width=0.5\textwidth]{comparing_surv_curve.pdf}
+  \caption[Survival curve comparison]{Comparison of expected survival curve against baseline survival and empirical survival}
+  \label{fig:comparing_surv_curve}
+\end{figure*}
+
+This leads to the question of statistical similarity of the curves thus generated. The Kolmogorv-Smirnov test \cite{ks_test_lilliefors} is used to test for this, with the null hypothesis being that the curves are `similar', i.e. the generating process for both the curves is the same. As standard, two critical values of 0.01 and 0.05 are chosen. It is seen that the p-value for the test between CPH and the neural network is above 0.05; therefore the null hypothesis cannot be rejected and it follows that the baseline survival from a traditional fitter such as Cox Proportional Hazards is statistically similar to the `expected' survival generated from the NN\footnote{Refers to the expected survival curve generated from the time-invariant neural network in this study}. The case for comparison with the empirical distribution is more of an edge case, allowing rejection of the null hypothesis at critical value of 0.05 but not at 0.01.\\
+
+\begin{table}
+  \centering
+  \begin{tabular}{|c|c|c|c|}
+  \hline
+  \textbf{p-values}&\textbf{CPH}&\textbf{KM}&\textbf{NN}\\
+  \hline
+  \textbf{CPH}&-&0.0019&0.1877\\
+  \hline
+  \textbf{KM}&-&-&0.0461\\
+  \hline
+  \end{tabular}
+  \caption[KS test]{Results of KS test}
+  \label{tab:kstest}
+\end{table}
+
+From here, it may be natural to want to investigate the factors that cause anindividual subject's survival to deviate (at any particular timestep) from the `expected' survival at that time. Figure \ref{fig:diff_exp_curve} illustrates how a particular subject's survival curve is shifted from the expected curve. Figure \ref{fig:shap} shows the breakdown for one patient at a particular discrete timestep. \\
+
+%diff_exp_curve
+
+\begin{figure*}
+  \centering
+  \includegraphics[width=0.5\textwidth]{diff_exp_curve.pdf}
+  \caption[Survival difference]{An individual subject's survival curve differs from the expected survival curve}
+  \label{fig:diff_exp_curve}
+\end{figure*}
+
+\begin{figure*}
+  \centering
+  \includegraphics[width=\textwidth]{shap_fig.pdf}
+  \caption[SHAP waterfall chart]{Deviation from expected output for single subject shown on predictor scale. Passing the values through sigmoid function will convert them to response scale, i.e. discrete hazards}
+  \label{fig:shap}
+\end{figure*}
+
+\begin{table*}
+  \centering
+  \begin{tabular}{|p{4cm}|p{10cm}|p{1.5cm}|p{1.5cm}|}
+     \hline
+    \textbf{Model} & \textbf{Hyperparameters} & \textbf{C-Index} & \textbf{IBS} \\
+    \hline
+    Cox Proportional Hazards (CPH) & penalizer = 0.1, step\_size = 0.1 & 0.6953 & \textbf{0.1731}\\
+    \hline
+    Weibull Accelerated Failure Times (AFT) & penalizer = 0.01  & 0.6953 & 0.1741\\
+    \hline
+    Random Survival Forest & n\_estimators=1000, min\_samples\_split=10, min\_samples\_leaf=15, n\_jobs=-1, random\_state=1234, oob\_score = True  & 0.6911 (0.6855, 0.6973) & 0.2013 (0.1998, 0.2024)\\
+    \hline
+    PyCox (Logistic Hazard loss function \cite{kvamme_continuous_2019}) & discretization=15, layers=[256,256],  batch\_norm=True, dropout=0.5, batch\_size=256, epochs=500 & 0.5984 (0.5723, 0.6104)& 0.1768 (0.1751, 0.1778)\\
+    \hline
+    Deep Survival Machines & k=6, distribution=LogNormal, learning\_rate=1e-3, layers=[100, 100] & 0.6498 (0.6016, 0.6598) & 0.2739 (0.2651, 0.2834)\\
+    \hline
+    Time-Invariant Survival & clusters=1, discretizations = 15, hidden\_size = 25 , alpha = 0.05 , batch\_size=256, num\_epochs=400, learning\_rate=0.001, patience=20, dropout\_rate = 0.5, mc\_iter = 100 & 0.6903 (0.6789, 0.6994) &0.4030 (0.3937, 0.4090) \\
+    \hline
+    Time-Variant Survival & discretizations = 15, hidden\_size = 25 , alpha = 0.01 , batch\_size=256, num\_epochs=100, learning\_rate=0.001, patience=20, dropout\_rate = 0.5, mc\_iter = 100  & \textbf{0.7301} (0.7263 , 0.7352) & 0.4039 (0.3981, 0.4072)\\
+    \hline
+  \end{tabular}
+  \caption[Experiment results]{Evaluation metrics - Best metrics are written in \textbf{bold}. Both metrics are reported as \texttt{Mean (lower 90\% confidence interval, upper 90\% confidence interval)}.}
+  \label{tab:eval}
+\end{table*}
+
+
+Furthermore, this implementation generates confidence intervals by applying Monte-Carlo dropout. For any particular subject, the returned survival curve natively has confidence bands associated with it. They can be seen again in Figure \ref{fig:diff_exp_curve}.\\
+
+%\begin{figure*}
+% \centering
+%  \includegraphics[width=0.5\textwidth]{example_survival_graph.pdf}
+%  \caption{Survival Curve for single subject with 90\% confidence intervals}
+%  \label{fig:example_survival_graph}
+%\end{figure*}
+
+%\section{\label{conc}Discussions}
+%The architecture is sacrificing calibration for discriminatory power. The Figures \ref{fig:cindex} and \ref{fig:ibs} showcase this situation.
+
+\section{\label{morework}Further Work}
+Neural network methods capable of temporal learning (forms of RNN) can be applied to this problem to see if the discriminative power can be increased. This study has not applied several modern neural network optimizations like Nesterov momentum and learning rate scheduling - further work can focus on these aspects. Deeper architectures may be applied to the problem, however, longer training times may discourage this. This study has used evaluation metrics implemented in \cite{kvamme_continuous_2019}. Currently the time-dependent concordance index calculation appears to take a good amount of time to generate results. This can be a point for further improvement. From a modularization perspective, classes for Time-Invariant and Time-Variant processes are completely separate at the moment. Perhaps later they can inherit common functionalities from a parent class.\\
+
+In future, if the clustering utility is investigated in more detail, one might find that some parts of the code break due to the random initialization of clusters sometimes producing cohorts whose duration indices do not match the number of requested discretizations. This is a bug and may warrant investigation. For evaluation criteria, another popular metric in the survival analysis literature is cumulative dynamic AUC \cite{cum_dyn_auc}. Future iterations can focus on this metric along with the two others mentioned in this study to see if it yields a different assessment of the models' suitability.
+
+
+\section{\label{disc}Discussion}
+Both the time-invariant and time-varying architectures are sacrificing calibration for discriminatory power. Again, the Figures \ref{fig:cindex} and \ref{fig:ibs} shows this. Depending on the situation, the metric to which more importance is given may change. Therefore, careful consideration needs to be taken before attempting to apply the method(s) proposed in this study. Another criterion to consider that often goes hand in hand with neural networks and large scale data is training time. Deep learning methodologies can indeed outperform traditional methods, provided proper hyperparameter tuning and enough training time. That being said, it is often seen that training time (number of epochs) is often not linearly correlated with better performance (in terms of discriminatory power).
+
+%\cite{*}
 
 \bibliography{references}% Produces the bibliography via BibTeX.
 
 \appendix
 
-\section{\label{appdx}Appendix}
+\section{\label{appdx}Supplementary Material}
 
-Some formal mathematical formulations of the methods used in this paper are elaborated in the following sections
-\subsection{\label{non_param}Non-Parametric Fits}
-The Kaplan Meier fitter
+Some formal mathematical formulations of the methods used in this paper are elaborated in the following sections.
 
-The Nelson Aalen
+\subsection{\label{app:non_param}The Kaplan Meier fitter}
 
-MLP
+This estimator, first proposed in \cite{km_curve}, is the product over the failure times of the conditional probabilities of surviving to the next failure time. It is given as
+\[
+\hat{S}(t) = \prod_{t_i \le t}(1 - \hat{q}_i) = \prod_{t_i \le t}(1 - \frac{d_i}{n_i}) \numberthis  \label{eq:km}
+\],
+where $n_i$ is the number of subjects at risk at time $t_i$, and $d_i$ is the number of individuals who fail at that time \cite{Moore_2016}. When plotted, it produces the standard step curve that comes up in all introductory material to survival analysis.
 
-CNN
+\subsection{\label{app:more_basics}More Survival Analysis Basics}
+Classical expression for hazard is given as
+\begin{align}
+h(t) = \lim_{\delta\to0}\frac{P(t<T<t+\delta|T>t)}{\delta} \label{eq:haz}
+\end{align}
 
-MC dropout
+From equation \ref{eq:haz_pmf_surv}, it can be further simplified as
+\begin{gather*}
+h(t) = -\frac{d}{dt}S(t)\frac{1}{S(t)}\\
+\implies S(t) = exp\left (- \int_{0}^{t}h(u)du\right) \numberthis  \label{eq:cum_haz}
+\end{gather*}
 
-SHAP
+This relationship produces the survival function from a corresponding hazard function \cite{Moore_2016}.
+\[
+H(u) = \int_{0}^{t}h(u)du
+\]
+is known as the cumulative hazard, which is also extensively studied throughout the literature.
 
-\section{\label{perf}Performance Metrics}
-Times of all the fitters.
+\subsection{\label{app:part_lik}Cox Partial Likelihood}
+A general formulation for the Cox partial likelihood is given following \cite{Moore_2016}. Consider failure time $t_i$. The set of all subjects in the trial “at risk” for failure at this time is denoted by $j:Y_j>Y_i$, where $Y$ denotes the observed survival time. The probability of patient $i$ failing at this time is 
+\[
+L_i = \frac{h(t_i | x_i)}{\sum^{}_{j:Y_j>Y_i}h(t_i|x_j)} \numberthis  \label{eq:likelihood_contribution}
+\]
+where $h(t|x)$ denotes the hazard for patient with covariates $x$ at time $t$. The likelihood of the entire cohort is thus,
+\[
+L = \prod^{}_{i:C_i=1}L_i = \prod^{}_{i:C_i=1}\frac{h(t_i | x_i)}{\sum^{}_{j:Y_j>Y_i}h(t_i|x_j)} \numberthis  \label{eq:likelihood}
+\]
+where $C_i=1$ denotes an observed (uncensored) event. The assumption of a proportional hazards model reduces this to
+\[
+L = \prod^{}_{C_i=1}\frac{e^{w^Tx_i}}{\sum^{}_{j:Y_j>Y_i}e^{w^Tx_j}} \numberthis  \label{eq:reduced_likelihood_contribution}
+\] 
+It is noted that the baseline hazard $h_0$ is canceled from both the numerator and the denominator \cite{raykar_cindex}. The log likelihood therefore becomes
+\[
+\ell = \sum^{}_{i:C_i=1} \Bigg( w^Tx_i - log\sum^{}_{j:Y_j>Y_i}e^{w^Tx_j}\Bigg) \numberthis  \label{eq:log_likelihood}
+\]
+Interestingly, this negative of this log-likelihood is used as the loss function for DeepSurv \cite{deepsurv} and the Faraggi-Simon net \cite{faraggi_simons}.\\
+%\cite{faraggi_simons} and later in \cite{deepsurv}
+
+\subsection{\label{app:loss}Loss Function(s)}
+\textbf{Negative Log-Likelihood - hazard function}\\
+The following derivation is taken from \cite{kvamme_continuous_2019}. For notational convenience, let $\kappa(t) \in \{0, \ldots , m\}$ define the index of the discrete time $t$, meaning $t = \tau_{\kappa(t)}$. Thus, the likelihood contribution for individual $i$ is seen to be 
+
+\begin{align*}
+&L_i = f(t_i)^{\delta_i}S(t_i)^{1-\delta_i}\\
+&= [h(t_i)S(\tau_{\kappa(t_i)-1})]^{d_i}][(1-h(t_i))S(\tau_{\kappa(t_i)-1})]^{1-d_i}\\
+&= h(t_i)^{d_i}[1 - h(t_i)]^{1-d_i}S(\tau_{\kappa(t_i)-1})]\\
+&= h(t_i)^{d_i}[1 - h(t_i)]^{1-d_i} \prod^{\kappa_{t_i-1}}_{j=1}[1 - h(\tau_j)] \numberthis  \label{eq:ll_contribution}
+\end{align*}
+For all the individuals, the combined log-likelihood is
+\begin{align*}
+L = \prod^{n}_{i=1}L_i = \prod^{n}_{i=1}\Bigg(h(t_i|x_i)^{d_i}[1 - h(t_i|x_i)]^{1-d_i} \\
+\prod^{\kappa_{t_i-1}}_{j=1}[1 - h(\tau_j|x_i)]\Bigg) \numberthis  \label{eq:ll}
+\end{align*}
+From here, the loss function for a batch can be constructed as the negative log likelihood.
+\begin{align*}
+log(L) = \sum^{n}_{i=1}\Bigg(d_i log[h(t_i|x_i)]+(1-d_i)log[1-h(t_i|x_i)]+\\
+\sum^{\kappa(t_i)-1}_{j=1}log[1 - h(\tau_j|x_i)] \Bigg) \numberthis  \label{eq:logll}
+\end{align*}
+To adjust for varying batch sizes, the mean negative log likelihood is taken as the loss.
+\begin{align*}
+\mathcal{L}_{nll} = -\frac{1}{n}\sum^{n}_{i=1}\Bigg(d_i log[h(t_i|x_i)]+(1-d_i)log[1-h(t_i|x_i)]+\\
+\sum^{j=1}_{\kappa(t_i)-1}log[1 - h(\tau_j|x_i)] \Bigg) \\
+= \frac{1}{n}\sum^{n}_{i=1}\sum^{\kappa_{t_i}}_{j=1}(y_{ij}log[h(\tau_j|x_i)]+(1-y_{ij})log[1-h(\tau_j|x_i)]) \numberthis  \label{eq:nll}
+\end{align*}
+This can now be minimized by gradient-based methods, thus making it a useful loss function for a neural network to work with. Here, $y_{ij}$ is an indicator variable corresponding to 1 if and only if an event is experienced by the individual $i$ at time $t_j$. Hence, $y$ is a sparse matrix consisting of mostly 0 with 1 only present when the time $t_j$ represents an observed event $d_i = 1$ for individual $x_i$. \\
+
+The loss can be thought of as the negative log likelihood of Bernoulli data $\theta^p(1-\theta)^{1-p}$, where $\theta=h(\tau_j|x_i)$ and $p=y_{ij}$ \cite{bin_x_entropy_brown}, and can be computed using existing functions in the PyTorch library.\\
+
+\textbf{Lower-Bound on C-Index}\\
+The following loss function is taken from \cite{raykar_cindex}. The sigmoid function defined as $\sigma = (1 + e^{-z})^{-1}$ is an approximation to the indicator function $\mathds{1}_{z>0}$. However, it is not a lower bound. For this, the scaled version of its log is taken.
+\begin{gather*}
+\mathds{1}_{z>0} \ge log\ [2\sigma(z)]/log\ 2\\
+\implies \mathds{1}_{z>0} \ge 1 + (log\ \sigma(z)/log\ 2) \numberthis  \label{eq:cindex_inequality}
+\end{gather*}
+
+For a more rigourous treatment of this inequality, see the original paper \cite{raykar_cindex}. It follows that the lower bound on the concordance index then becomes
+\begin{gather*}
+c = \frac{1}{|\mathcal{E}|}\sum_{i:C_i = 1}\sum_{T_j > T_i} \mathds{1}_{\eta_j > \eta_i}\\
+c \ge \frac{1}{|\mathcal{E}|}\sum_{i:C_i = 1}\sum_{T_j > T_i} 1 +  (log\ \sigma(\eta_j - \eta_i)/log\ 2) \numberthis  \label{eq:cindex_lbo}
+\end{gather*}
+
+The negative of this lower-bound is chosen to be the loss function, which can therefore be minimized using gradient-based methods (again, with the help of a library like PyTorch).
+\[
+\mathcal{L}_{lbo} = -\frac{1}{|\mathcal{E}|}\sum_{i:C_i = 1}\sum_{T_j > T_i} 1 +  (log\ \sigma(\eta_j - \eta_i)/log\ 2) \numberthis  \label{eq:l_lbo}
+\]
+
+\subsection{\label{app:mlp}Multi Layer Perceptron}
+The multi-layer perceptron, arose from the field of psychology \cite{mlp} formed the foundation of neural networks, although later implementation gradually tore away from the biological foundations and now bear only a slight similarity to the functioning of a human brain. For ordinary regression tasks, an input vector $\mathbf{x}$, weight vector $\mathbf{w}$ and bias vector $\mathbf{b}$,
+\[
+\mathbf{x} = \begin{bmatrix}
+x_1 \\
+x_2 \\
+\vdots \\
+x_n
+\end{bmatrix}
+\quad
+\mathbf{w} = \begin{bmatrix}
+w_1 \\
+w_2 \\
+\vdots \\
+w_n
+\end{bmatrix}
+\quad
+\mathbf{b} = \begin{bmatrix}
+b_1 \\
+b_2 \\
+\vdots \\
+b_n
+\end{bmatrix}
+\]
+could be used to estimate a target variable $\mathbf{y}$ as 
+\[
+\mathbf{y} = \sigma(\mathbf{w}^T\mathbf{x}+\mathbf{b}) \numberthis  \label{eq:mlp}
+\]
+where $\sigma$ is the sigmoid function for logistic regression and just the identity for linear regression. Now, a perceptron without any hidden layers (as was the original) is effectively similar to ordinary regression. With the addition of hidden layers and non-linear activation functions, multi-layer perceptrons become much more powerful. For a network with $\mathbf{L}$ layers, the output of the $i^{th}$ neuron in the $l^{th}$ layer, where $l \in \mathbf{L}$ is given as
+\begin{gather}
+z^{l}_{i} = \mathbf{w}^{T}_{i}\mathbf{a}^{l-1} + \mathbf{b}_i \label{eq:mlp_inactivate} \\
+\mathbf{a}^{l}_i = \sigma^{l}(z^{l}_{i}) \label{eq:mlp_activated}
+\end{gather}
+where $\mathbf{a}^{l}_{i}$ is the activated (having passed through the activation function) output from the $i^{th}$ neuron in the $l^{th}$ layer. This network is trained iteratively by backpropagating \cite{backprop} errors through the connections over multiple epochs until some reasonable notion of convergence is achieved.
 
 
-\section{\label{perf}Performance Metrics}
-All relevant code for this study can be found on \href{https://github.com/sourasen1011/UoE_Research_Project_2023/tree/dev}{sourasen1011/UoE\_Research\_Project\_2023/tree/dev}.
+\subsection{\label{app:SHAP}SHAP}
+Explainability of results is sought through SHAP values. The concept of SHAP (SHapley Additive Explanations) comes from coalitional game theory and were recently incorporated into the field of machine learning \cite{shap_force_plot} \cite{shap}. The idea is to justly allocate credit to each member of a group (or coalition) for achieving a common goal. An easy example to think of might be to think of a group of friends running up a restaurant bill. At the end, it would be fair for them to split the bill according to what they individually ate. It can be seen that this quite naturally translates to the world of model building, where it is important to know what the contribution of each feature was to the final model output. SHAP provides this unified framework.
+
+
+%CNN
+
+%MC dropout
+
+%SHAP
+
+
+%\section{\label{perf}Code and Reproducibility }
+%All relevant code for this study can be found on \href{https://github.com/sourasen1011/UoE_Research_Project_2023/%tree/dev}{https://github.com/sourasen1011/UoE\_Research\_Project\_2023/}.
+%\end{multicols} % end multi cols layout
+
 \end{document}
 %
 % ****** End of file apssamp.tex ******
