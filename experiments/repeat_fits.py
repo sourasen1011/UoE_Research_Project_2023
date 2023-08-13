@@ -33,14 +33,17 @@ def repeat_fits(iter , verbose):
 
 # main func
 def main():
+    # get time now
     start_time = time.time()
     parser = argparse.ArgumentParser(description="Run an experiment loop")
     parser.add_argument("--iter", type=int, default=1, help="Number of times to run the experiment loop")
-    parser.add_argument("--speak", type=bool, default=True, help="Controls verbosity")
+    parser.add_argument("--verbose", type=bool, default=True, help="Controls verbosity")
     args = parser.parse_args()
 
     # get results
-    res = repeat_fits(args.iter , args.speak)
+    res = repeat_fits(args.iter , args.verbose)
+
+    # get ending time
     end_time = time.time()
 
     execution_time = end_time - start_time
