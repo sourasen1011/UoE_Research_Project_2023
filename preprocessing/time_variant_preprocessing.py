@@ -182,7 +182,6 @@ print(bloodwork_pivot.subject_id.nunique())
 hadm_id_list = "('"+"','".join(list(all_hf_pats_0['hadm_id'].unique().astype('str')))+"')"
 hadm_id_list
 
-# Note: Leaving out 'atenolol' as it does not have any usage within the cohort 
 q = f'''
 select a.* from
 (
@@ -193,7 +192,7 @@ select a.* from
 where a.l_medication in ('amlodipine','diltiazem','felodipine','isradipine','nicardipine',
 'nifedipine','nisoldipine','verapamil','azilsartan','candesartan','eprosartan','irbesartan',
 'losartan','olmesartan','telmisartan','valsartan','benazepril','captopril','enalapril','fosinopril',
-'lisinopril','moexipril','perindopril','quinapril','ramipril','trandolapril','acebutolol','atenolol','Atenolol',
+'lisinopril','moexipril','perindopril','quinapril','ramipril','trandolapril','acebutolol','atenolol',
 'bisoprolol','metoprolol','nadolol','nebivolol','propranolol')
 and a.event_txt = 'Administered'
 '''
