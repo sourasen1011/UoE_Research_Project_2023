@@ -262,7 +262,7 @@ Here, kernel\_size = 3, stride = 1 and padding = 1.
 The study uses the large publicly available database MIMIC-IV \cite{mimic_iv}, which consists of critical care data from hospital and ICU admissions for almost 300,000 patients admitted to intensive care units at the Beth Israel Deaconess Medical Center (BIDMC). For a more thorough treatment of the data, see \href{https://physionet.org/content/mimiciv/2.2/}{MIMIC-IV website}.
 
 \subsection{\label{preprocess}Preprocess}
-To prepare the data, all admissions associated with a Heart Failure ICD-10 code \cite{ICDs} are selected - this formsa the base pool of patients. Admission and discharge times are collected along with static covariates such as patients' gender, age and date of death. Patients' ethnicity is collected and grouped into six broad categories - Native, Asian, Black, Hispanic, White and Other \footnote{To avoid multi-collinearity issues arising later, the `OTHER' variable is dropped after one-hot encoding. Similary, `F' variable corresponding to gender (female) is also dropped after one-hot encoding.}.\\
+To prepare the data, all admissions associated with a Heart Failure ICD-10 code \cite{ICDs} are selected - this forms the base pool of patients. Admission and discharge times are collected along with static covariates such as patients' gender, age and date of death. Patients' ethnicity is collected and grouped into six broad categories - Native, Asian, Black, Hispanic, White and Other \footnote{To avoid multi-collinearity issues arising later, the `OTHER' variable is dropped after one-hot encoding. Similary, `F' variable corresponding to gender (female) is also dropped after one-hot encoding.}.\\
 
 Time-variant records such as BMI, Weight and Height are collected from Online Medical Records (OMR). Such records have an associated chart-time or chart-date, denoting when they were collected. Lab tests corresponding to cholesterol, sodium intake, lymphocyte levels \cite{lymph_count} and hemoglobin levels \cite{hemo} were considered. Medication administered from the classes of angiotensin-converting enzyme blockers, angiotensin receptor blockers, calcium channel blockers and beta blockers are also taken as features. Vital signs such as temperature, heartrate, respiratory rate, $O_2$ saturation, systolic and diastolic blood pressure are also taken. Patients who have at least one record for all of the above datasets (OMR, lab test, medication and vital signs) are retained. \\
 
@@ -271,7 +271,7 @@ For the time-varying version, the time difference between each subsequent observ
 %and hematocrit levels \cite{hema} 
 
 \subsection{\label{censoring}Censoring}
-Patients' earliest admission time is considered as their `start' date. If their death date is not captured in the data \footnote{Out-of-hospital mortality is captured from state records. If the individual survived for at least one year after their last hospital discharge, then the death date will have a NULL value.}, their last known discharge time is known as their `end' date - these patients are considered to be censored. Otherwise, their date of death is taken to be the `end' date - these are the uncensored patients. The distribution of event/censoring times is quite similar across both censored and uncensored cohorts - see Figure \ref{fig:cohort_hist}.
+Patients' earliest admission time is considered as their `start' date. If their death date is not captured in the data \footnote{Out-of-hospital mortality is captured from state records. If the individual survived for at least one year after their last hospital discharge, then the death date will have a NULL value.}, their last known discharge time is taken as their `end' date - these patients are considered to be censored. Otherwise, their date of death is taken to be the `end' date - these are the uncensored patients. The distribution of event/censoring times is quite similar across both censored and uncensored cohorts - see Figure \ref{fig:cohort_hist}.
 
 \begin{figure}[H]
   \centering
@@ -281,16 +281,14 @@ Patients' earliest admission time is considered as their `start' date. If their 
 \end{figure}
 
 \subsection{\label{censoring}Data Standardization}
-Patients are randomly distributed into train, test and validation pools. Columns with zero variance in the training data are discarded from all three datasets - train, test and validation. Across each pool, their survival time is discretized into $q=15$ buckets or time intervals. For example, a patient whose survival time belongs to the $j^{th}$ bucket has experienced the event (or been censored) between the time interval $[q_j, q_{j+1})\ \forall j \in [1,2,\cdots,m]$.\\
+Patients are randomly distributed into train, test and validation pools. Columns with zero variance in the training data are discarded from all three datasets - train, test and validation. Across each pool, their survival time is discretized into $m=15$ buckets or time intervals. For example, a patient whose survival time belongs to the $j^{th}$ bucket has experienced the event (or been censored) between the time interval $[\tau_j, \tau_{j+1})\ \forall j \in [1,2,\cdots,15]$. For the time-invariant version, simple pipelines for imputation and scaling are carried out. \\
 
-For the time-invariant version, simple pipelines for imputation and scaling are carried out. For the time-varying version, the process is slightly more involved. First, a patient-level cumulative time difference column is introduced, to keep track of when medications or test were administered - for every patient, this column starts with 0. \\
+For the time-varying version, the process is slightly more involved. First, a patient-level cumulative time difference column is introduced, to keep track of when medications or test were administered - for every patient, this column starts with 0. Next, a null mask $\mathcal{M}$ is created, as in \cite{deephit}. As neural networks cannot natively handle missing data, the matrices need to be imputed (strategies will be discussed later). However, it can be reductive to ignore the fact that some data is missing in the original dataset. Therefore, a compromise is reached by creating a null mask before imputing the missing values. This null mask is then appended to the dataset before being fed to the neural network. The expectation is for the network to consider imputed values as missing when their corresponding mask element $\mathcal{M}_{idj}=0$, denoting the $j^{th}$ observation of covariate $d$ for patient $i$ is missing.\\
 
-Next, a null mask $\mathcal{M}$ is created, as in \cite{deephit}. As neural networks cannot natively handle missing data, the matrices need to be imputed (strategies will be discussed later). However, it can be reductive to ignore the fact that some data is missing in the original dataset. Therefore, a compromise is reached by creating a null mask before imputing the missing values. This null mask is then appended to the dataset before being fed to the neural network. The expectation is for the network to consider imputed values as missing when their corresponding mask element $\mathcal{M}_{idj}=0$, denoting the $j^{th}$ observation of covariate $d$ for patient $i$ is missing.\\
-
-As convolutional neural networks expect input of the same shape, the patient images need to be quantized to have the same width \footnote{This is already done as all the patients have the same number of covariates.} and the same height. The latter is achieved by sampling the multivariate time series data at set points during the patients history. For this study, a patient's history is divided into 10 equal parts, and all their covariates are interpolated over these divisions. Finally each column is normalized as per the L2 norm. Finally, they are reshaped to be fed into a PyTorch CNN model.
+As convolutional neural networks expect input of the same shape, the patient images need to be quantized to have the same width \footnote{This is already done as all the patients have the same number of covariates.} and the same height. The latter is achieved by sampling the multivariate time series data at set points during the patients history. For this study, a patient's history is divided into 10 equal parts, and all their covariates are interpolated over these divisions. Each column is normalized as per the L2 norm. Finally, they are reshaped to be fed into a PyTorch CNN model.
 
 \section{\label{metrics}Evaluation Metrics}
-As survival analysis differs from ordinary linear regression in the aspect that not all the survival times are known (right-censoring), there is merit in reviewing the evaluation metrics for this task. The two metrics used in the experimental setup are the time-dependent concordance index (in favour of the regular concordance index) and the Brier score (along with its aggregated version, the integrated Brier score).
+As survival analysis differs from ordinary linear regression in the aspect that not all the survival times are known (right-censoring), there is merit in reviewing the evaluation metrics for this task. The two metrics used in the experimental setup are the time-dependent concordance index in favour of the regular concordance index and the Brier score along with its aggregated version, the integrated Brier score.
 
 \subsection{\label{tdci}Time-Dependent Concordance Index ($td$-concordance index)}
 The C-index, often referred to as `Harrell's C-Index' or simply as the C-statistic is a measure of the discriminative capacity of a model. In essence, it is the generalization of the area under the ROC (Receiver Operator Characteristic) curve in a survival analysis setting \cite{Uno_Cai_Pencina_D’Agostino_Wei_2011} \cite{pysurv}. The formula for the c-index is given as
@@ -311,7 +309,7 @@ It can be interpreted as the fraction of all pairs of subjects whose predicted s
 \end{cases}
 \]
 
-There are limitations with the traditional c-index as highlighted by \cite{Hartman_Kim_He_Kalbfleisch_2023}, an important one being the assumption that the risk scores do not change over time. \cite{Heagerty_Zheng_2005} propose a time-dependent concordance index which essentially takes a weighted average of time-specific C-index values across the entire time scale.
+There are limitations with the traditional c-index as highlighted by \cite{Hartman_Kim_He_Kalbfleisch_2023}, an important one being the assumption that the risk scores do not change over time. The study in \cite{Heagerty_Zheng_2005} proposes a time-dependent concordance index which essentially takes a weighted average of time-specific C-index values across the entire time scale.
 
 \subsection{\label{ibs}Brier Score}
 
@@ -342,9 +340,9 @@ A series of experiments  were conducted on this data from both a time-invariant 
   \label{fig:km_curve}
 \end{figure*}
 
-Next, a range of parametric, semi-parametric, tree-based and neural network-based methods were applied to the data and their evaluation criteria noted. To establish confidence intervals on said criteria, fits were run multiple times - all time-invariant models apart from Cox Proportional Hazards model and Weibull Accelerated Failure Time model were run 20 times. The model allowing for time-varying data was run 10 times. Thus, distributions of their cindex and integrated Brier scores were generated. \\
+Next, a range of parametric, semi-parametric, tree-based and neural network-based methods were applied to the data and their evaluation criteria noted. To establish confidence intervals on said criteria, fits were run multiple times - all time-invariant models apart from Cox Proportional Hazards model and Weibull Accelerated Failure Time model were run 10 times. Thus, distributions of their cindex and integrated Brier scores were generated. \\
 
-One of the earlier aims of this study was to see if hybrid deep learning, that is the supplementation of deep learning with classical machine learning techniques would yield better performance compared to traditional techniques. In that light, although methods such as clustering and PCA are introduced into the pipeline, the highest discriminatory power (comparable to traditional methods) is generally observed if the data is directly fed into the neural network(s). Due to this shortcoming, the time-variant version has not been equipped with any clustering utility as opposed to its time-invariant counterpart. Some tests were carried out to see the effect of having multiple clusters and preprocessing the data with PCA. Details are in Table \ref{tab:eval_degrad}.
+One of the earlier aims of this study was to see if hybrid deep learning, that is the supplementation of deep learning with classical machine learning techniques would yield better performance compared to traditional techniques. In that light, although methods such as clustering and PCA are introduced into the pipeline, the highest discriminatory power (comparable to traditional methods) is generally observed if the data is directly fed into the neural network(s). Due to this shortcoming, the time-variant version has not been equipped with any clustering utility as opposed to its time-invariant counterpart. Some tests were carried out to see the effect of having multiple clusters and preprocessing the data with PCA. Details are in Table \ref{tab:eval_degrad}. The details of experiments comparing the two architectures with other off-the-shelf methods are listed in Table \ref{tab:eval}.\\
 
 \begin{table*}
   \centering
@@ -352,32 +350,32 @@ One of the earlier aims of this study was to see if hybrid deep learning, that i
      \hline
     \textbf{Extension} & \textbf{Hyperparameters} & \textbf{C-Index} & \textbf{IBS} \\
     \hline
-    Clustering & clusters = 1 & 0.6957 & 0.3995 \\
+    \raggedright Clustering & \raggedright clusters = 1 & 0.6957 & 0.3995 \\
     \hline
-    Clustering & clusters = 2 & 0.6857 & 0.4075 \\
+    \raggedright Clustering & \raggedright clusters = 2 & 0.6857 & 0.4075 \\
     \hline
-    Clustering & clusters = 3 & 0.6786 & 0.3915 \\
+    \raggedright Clustering & \raggedright clusters = 3 & 0.6786 & 0.3915 \\
     \hline
-    Clustering & clusters = 4 & 0.6724 & 0.4108 \\
+    \raggedright Clustering & \raggedright clusters = 4 & 0.6724 & 0.4108 \\
     \hline
-    Clustering & clusters = 5 & 0.6703 & 0.4141 \\
+    \raggedright Clustering & \raggedright clusters = 5 & 0.6703 & 0.4141 \\
     \hline
-    PCA & n\_components = 1 & 0.4891 & 0.4147\\
+    \raggedright PCA & \raggedright n\_components = 1 & 0.4891 & 0.4147\\
     \hline
-    PCA & n\_components = 2 & 0.5071 & 0.4127\\
+    \raggedright PCA & \raggedright n\_components = 2 & 0.5071 & 0.4127\\
     \hline
-    PCA & n\_components = 5 & 0.4927 &  0.4133\\
+    \raggedright PCA & \raggedright n\_components = 5 & 0.4927 &  0.4133\\
     \hline
-    PCA & n\_components = 10 & 0.4826 & 0.4049\\
+    \raggedright PCA & \raggedright n\_components = 10 & 0.4826 & 0.4049\\
     \hline
-    Clustering \& PCA & clusters = 2 , n\_components = 2& 0.5103 & 0.4131\\
+    \raggedright Clustering \& \raggedright PCA & clusters = 2 , n\_components = 2& 0.5103 & 0.4131\\
     \hline
   \end{tabular}
   \caption[Evaluation Metrics]{Evaluation metrics - Degradation with extensions. Note these metrics were collected on one specific run. Reruns may yield slightly different results}
   \label{tab:eval_degrad}
 \end{table*}
 
-The details of experiments comparing the two architectures with other off-the-shelf methods are listed in Table \ref{tab:eval}. It is noted that although the upper bound for the time-invariant method is above that of the traditional statistical fitters (CPH and AFT), its mean is below theirs. \\
+%It is noted that although the upper bound for the time-invariant method is above that of the traditional statistical fitters (CPH and AFT), its mean is below theirs. \\
 
 The time-invariant model performs better than the other neural networks, however it cannot reach the discriminative power of tree-based or traditional fitters. The time-variant counterpart seems to beat all other methods in terms of c-index (discriminative power) but both methods have quite a large Brier score (indicating poor calibration) in comparison to off-the-shelf methods. The Figures \ref{fig:cindex} and \ref{fig:ibs} showcase this situation.\\
 
@@ -423,7 +421,7 @@ This leads to the question of statistical similarity of the curves thus generate
   \label{tab:kstest}
 \end{table}
 
-From here, it may be natural to want to investigate the factors that cause anindividual subject's survival to deviate (at any particular timestep) from the `expected' survival at that time. Figure \ref{fig:diff_exp_curve} illustrates how a particular subject's survival curve is shifted from the expected curve. Figure \ref{fig:shap} shows the breakdown for one patient at a particular discrete timestep. \\
+From here, it may be natural to want to investigate the factors that cause an individual subject's survival to deviate (at any particular timestep) from the `expected' survival at that time. Figure \ref{fig:diff_exp_curve} illustrates how a particular subject's survival curve is shifted from the expected curve. Figure \ref{fig:shap} shows the breakdown for one patient at a particular discrete timestep. \\
 
 %diff_exp_curve
 
@@ -484,11 +482,12 @@ Neural network methods capable of temporal learning (forms of RNN) can be applie
 
 Deeper architectures may be applied to the problem, however, longer training times may discourage this. This study has used evaluation metrics implemented in \cite{kvamme_continuous_2019}. Currently the time-dependent concordance index calculation appears to take a good amount of time to generate results. This can be a point for further improvement. From a modularization perspective, classes for Time-Invariant and Time-Variant processes are completely separate at the moment. Perhaps later they can inherit common functionalities from a parent class.\\
 
-In future, if the clustering utility is investigated in more detail, one might find that some parts of the code break due to the random initialization of clusters sometimes producing cohorts whose duration indices do not match the number of requested discretizations. This is a bug and may warrant investigation. For evaluation criteria, another popular metric in the survival analysis literature is cumulative dynamic AUC \cite{cum_dyn_auc}. Future iterations can focus on this metric along with the two others mentioned in this study to see if it yields a different assessment of the models' suitability.
+For evaluation criteria, another popular metric in the survival analysis literature is cumulative dynamic AUC \cite{cum_dyn_auc}. Future iterations can focus on this metric along with the two others mentioned in this study to see if it yields a different assessment of the models' suitability.\\
 
+In future, if the clustering utility is investigated in more detail, one might find that some parts of the code break due to the random initialization of clusters sometimes producing cohorts whose duration indices do not match the number of requested discretizations. This is a bug and may warrant investigation. 
 
-\section{\label{disc}Discussion}
-Both the time-invariant and time-varying architectures are sacrificing calibration for discriminatory power. Again, the Figures \ref{fig:cindex} and \ref{fig:ibs} shows this. Depending on the situation, the metric to which more importance is given may change. Therefore, careful consideration needs to be taken before attempting to apply the method(s) proposed in this study. Another criterion to consider that often goes hand in hand with neural networks and large scale data is training time. Deep learning methodologies can indeed outperform traditional methods, provided proper hyperparameter tuning and enough training time. That being said, it is often seen that training time (number of epochs) is often not linearly correlated with better performance (in terms of discriminatory power).
+\section{\label{conc}Conclusion}
+Both the time-invariant and time-varying architectures are sacrificing calibration for discriminatory power. Again, the Figures \ref{fig:cindex} and \ref{fig:ibs} shows this. Depending on the situation, the metric to which more importance is given may change. Therefore, careful consideration needs to be taken before attempting to apply the method(s) proposed in this study. Another criterion to consider that often goes hand in hand with neural networks and large scale data is training time. Deep learning methodologies can compete with traditional methods, provided proper hyperparameter tuning and enough training time. That being said, it is often seen that training time (number of epochs) is often not linearly correlated with better performance (in terms of discriminatory power).
 
 %\cite{*}
 
