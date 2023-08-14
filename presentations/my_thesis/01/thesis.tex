@@ -237,12 +237,12 @@ A convolutional neural network is used to identify patterns in the patient-image
     \hline
     \textbf{Layer Type} & \textbf{Shape/Rate} \\
     \hline
-    Convolutional (nn.Conv2d) & ($1,14$) \\
+    Convolutional (nn.Conv2d) & ($1,c_1$) \\
     ReLU (nn.ReLU) & - \\
-    Convolutional (nn.Conv2d) & ($14,7$) \\
+    Convolutional (nn.Conv2d) & ($c_1,c_2$) \\
     ReLU (nn.ReLU) & - \\
     Flatten (nn.Flatten) & - \\
-    Dense (nn.Linear) & ($fc\footnote{Note that $fc = (7 \times input\_data.shape[2] \times input\_data.shape[3])$}, h$) \\
+    Dense (nn.Linear) & ($fc, h$) \\
     ReLU (nn.ReLU) & - \\
     Batch Normalization (nn.BatchNorm1d) & $h$ \\
     Dropout (nn.Dropout) & 0.5 \\ 
@@ -256,7 +256,7 @@ A convolutional neural network is used to identify patterns in the patient-image
   \caption[General Architecture Time-Variant]{General Architecture - Time-Variant}
   \label{tab:arch2}
 \end{table}
-Here, kernel\_size = 3, stride = 1 and padding = 1.
+Here, kernel\_size = 3, stride = 1 and padding = 1 \footnote{Note that $fc = (c_2 \times input\_data.shape[2] \times input\_data.shape[3])$}.
 
 \section{\label{data}Dataset}
 The study uses the large publicly available database MIMIC-IV \cite{mimic_iv}, which consists of critical care data from hospital and ICU admissions for almost 300,000 patients admitted to intensive care units at the Beth Israel Deaconess Medical Center (BIDMC). For a more thorough treatment of the data, see \href{https://physionet.org/content/mimiciv/2.2/}{MIMIC-IV website}.
