@@ -455,8 +455,9 @@ mod_df.drop('F' , axis = 1 , inplace = True)
 def train_test_splitter_tv(df , test_size = 0.2 , val_size = 0.2 , patient_col = 'subject_id'):
     # get all patients
     pats = df[patient_col].unique()
-    # inplace shuffle
-    np.random.shuffle(pats)
+    
+    # # inplace shuffle - uncomment this if you want different cohorts each time
+    # np.random.shuffle(pats)
 
     # get splits
     test_pats = pats[:int(test_size*len(pats))]
