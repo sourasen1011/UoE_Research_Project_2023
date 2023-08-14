@@ -132,20 +132,20 @@ where $h_0$ is called as the baseline hazard. Here $x$ is a vector of subject co
 
 Accelerated failure time models (AFT) are a popular parametric alternative to the Cox Proportional Hazards (PH) model \cite{aft}. They are especially useful in discriminating between groups where the survival times of one can be uniformly shifted back or forth to get the survival times of another. Unlike Cox PH models, where the baseline hazard is unspecified, AFT models directly model the survival times \cite{aft_2009}.\\
 
-Random Survival Forest models have managed to achieve state-of-the-art performance. At the cost of higher fitting times, they deliver high discriminative power with impressive calibration \cite{rsf}. Building on Breiman's approach in \cite{rf}, this method uses the log-rank test between survival cohorts to determine the best splits. RSF have a selection bias towards covariates with many possible splits or missing values. Improvements towards mitigating this have been made in the form of Conditional Inference Forests which use more nuanced criteria to split nodes, via unbiased recursive partitioning \cite{cit}.
+Random Survival Forest (RSF) models have managed to achieve state-of-the-art performance. At the cost of higher fitting times, they deliver high discriminative power with impressive calibration \cite{rsf}. Building on Breiman's approach in \cite{rf}, this method uses the log-rank test between survival cohorts to determine the best splits. RSF models have a selection bias towards covariates with many possible splits or missing values. Improvements towards mitigating this have been made in the form of Conditional Inference Forests which use more nuanced criteria to split nodes, via unbiased recursive partitioning \cite{cit}.
 
 \subsection{\label{setting}Data Setup}
 Before moving to the discrete setting, some formal notation for the data is introduced. The data is assumed to be right-censored (starting times for all subjects are known, but ending times are not). Hence, the data, $\mathcal{D}$ can be represented as a set of tuples $\{(x_i , t_i , d_i)\}_{i=1}^{N}$  \cite{nagpal_deep_2021}. Here, $x_i \in \mathbb{R}^d$ are covariates for patient $i$. $t_i$ is the time of an event or censoring such that $t_i = min(T_i, C_i)$, where $T_i$ and $C_i$ respectively denote the times of event and censoring. A subject is assumed to have either experienced an event or have been censored, but not both. $d_i$ is an indicator that signifies whether $t_i$ is event time or censoring time. $d=1$ for a subject that experiences the event (uncensored) while $d=0$ for a subject that is censored before experiencing the event. More formally, $d= \mathds{1}\{T_i \le C_i\}$. Later in the paper, experiments with time-variant covariates will necessitate the use of a null masking matrix, $\mathcal{M}$ \cite{deephit}.\\
 
 \subsection{\label{discrete}Discrete-Time Survival Analysis}
-For hazard and survival calculation in a discrete-time setting, the following formulation from \cite{kvamme_continuous_2019} is presented. Let $\mathbb{T} = \{\tau_1, \tau_2, \ldots\ \}$ denote the timestamps, i.e. the indices of the discrete times corresponding to different subjects in the data. The event timestamp is $T*\in\mathbb{T}$. The definitions of PMF and survival function follow as
+For hazard and survival calculation in a discrete-time setting, the following formulation from \cite{kvamme_continuous_2019} is presented. Let $\mathbb{T} = \{\tau_1, \tau_2, \ldots\ \}$ denote the timestamps, i.e. the indices of the discrete times corresponding to different subjects in the data. The event timestamp is $T^*\in\mathbb{T}$. The definitions of PMF and survival function follow as
 \begin{gather*}
-f(\tau_j) = P(T* = \tau_j),\\
-S(\tau_j) = P(T* >\tau_j) = \sum_{k>j}f(\tau_k) \numberthis  \label{eq:surv_pmf}
+f(\tau_j) = P(T^* = \tau_j),\\
+S(\tau_j) = P(T^* >\tau_j) = \sum_{k>j}f(\tau_k) \numberthis  \label{eq:surv_pmf}
 \end{gather*}
-It can be seen that the hazard at time $\tau_j$ $h(\tau_j)$, is just the probability of an event happening at time $\tau_j$, given the subject has survived till the previous time step $\tau_{j-1}$. 
+It can be seen that the hazard at time $\tau_j$, $h(\tau_j)$, is just the probability of an event happening at time $\tau_j$, given the subject has survived till the previous time step $\tau_{j-1}$. 
 \begin{align}
-&h(\tau_j) = P(T* = \tau_j | T* > \tau_{j-1}) = \frac{f(\tau_j)}{S(\tau_{j-1})} \label{eq:haz_cond_proba}
+&h(\tau_j) = P(T^* = \tau_j | T^* > \tau_{j-1}) = \frac{f(\tau_j)}{S(\tau_{j-1})} \label{eq:haz_cond_proba}
 \end{align}
 
 \begin{align*}
@@ -155,10 +155,10 @@ It can be seen that the hazard at time $\tau_j$ $h(\tau_j)$, is just the probabi
 
 Recursively, the survival function can be parameterized wholly in terms of the hazard function as
 \begin{align}
-S(\tau_j) = \prod_{k=1}^{j}(1 - h(\tau_k)) \label{eq:cum_haz}
+S(\tau_j) = \prod_{k=1}^{j}(1 - h(\tau_k)) \label{eq:cumulative_haz}
 \end{align}
 
-Equation \ref{eq:cum_haz} will be useful in later derivations. Now, coming to likelihoods, if there were no censoring involved, the likelihood of observing $n$ failures (events) is of the form
+Equation \ref{eq:cumulative_haz} will be useful in later derivations. Now, coming to likelihoods, if there were no censoring involved, the likelihood of observing $n$ failures (events) is of the form
 \[
 L(t_1 , t_2 , \ldots , t_n) = f(t_1)f(t_2)\ldots f(t_n)=\prod^{n}_{i=1}f(t_i) \numberthis  \label{eq:likelihood_no_censor}
 \]
