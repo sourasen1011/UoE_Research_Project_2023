@@ -45,3 +45,7 @@ The Study to Understand Prognoses Preferences Outcomes and Risks of Treatment (S
 https://pubmed.ncbi.nlm.nih.gov/9610025/
 
 The consensus among the above three datasets is that tree-based models with default parameters generally outperform all other models. It will likely take a lot of hand-tuning to get TIS or PyCox to perform as well.
+
+#### ```resources```
+
+Although the SUPPORT and METABRIC datasets are sourced from the ```pycox``` module, the FLCHAIN data is present in the ```resources/other_data``` folder.
