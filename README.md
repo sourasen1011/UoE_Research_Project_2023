@@ -22,7 +22,7 @@ The ```experiment_fits.ipynb``` file tests out some extensions like adding PCA a
 
 This ```experiments_fits.ipynb``` file also produces graphs for the distributions of the scores.
 
-The ```examples``` directory contains experiments with some other datasets
+The ```examples``` directory contains experiments with some other datasets as well as MIMIC-IV.
 1. FLCHAIN
 FLCHAIN: contains half of the data collected during a study about the possible relationship between serum FLC and mortality.
 https://rdrr.io/cran/survival/man/flchain.html
