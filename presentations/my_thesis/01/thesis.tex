@@ -197,10 +197,10 @@ This work introduces a layer of uncertainty quantification to the survival estim
 Being uncertainty-aware ties in with the idea of interpretability of modern deep learning methods, which is often a barrier towards the adoption of such methods into highly regulated industries such as finance or medicine. SHAP (SHapley Additive exPlanations) values \cite{shap}, extended from the field of cooperative game theory provide a unified, model-agnostic method to explain the contributions of covariates to a model's output.
 
 \section{\label{model_arch}Model Architecture}
-This study attempts to model survival functions from both a time-invariant perspective (using means of covariates) and from a time-variant perspective (using historical data for covariates). The latter takes some more preprocessing and requires a slghtly more complex architecture.
+This study attempts to model survival functions from both a time-invariant perspective (using means of covariates) and from a time-variant perspective (using historical data for covariates). The latter takes some more preprocessing and requires a slightly more complex architecture.
 
 \subsection{\label{time_invar_arch}Time-Invariant}
-The simpler time-invariant version of the architecture is a multi-layer perceptron (MLP), otherwise referred to as a fully-connected neural network. Consider a batch of input covariates $x \in \mathbb{R}^{n\times d}$, where $n$ is the batch size and $d$ is the number of input covariates. The basic architecture is as outlined in Table \ref{tab:arch1}.\\
+The simpler time-invariant version of the architecture is a multi-layer perceptron (MLP), otherwise referred to as a fully-connected feed-forward neural network. Consider a batch of input covariates $x \in \mathbb{R}^{n\times d}$, where $n$ is the batch size and $d$ is the number of input covariates. The basic architecture is as outlined in Table \ref{tab:arch1}.\\
 
 \begin{table}[H]
   \centering
@@ -228,7 +228,7 @@ Here, $m$ is the output size, denoting the number of discretized time indices ac
 %Optimizer - Nesterov Momentum, Learning Rate scheduler - decay!
 
 \subsection{\label{time_var_arch}Time-Varying}
-First, a patient image is built for each subject in the dataset. Consider a batch of input covariates $x \in \mathbb{R}^{n\times t_s \times d}$, where $t_s$ is the number of time-steps along the subjects' journey(s). $n$ and $d$ retain their meaning from earlier. \\
+First, a patient image is built for each subject in the dataset. Consider a batch of input covariates $x \in \mathbb{R}^{n\times t_s \times d}$, where $t_s$ is the number of time-steps along the subjects' journey(s). For this study, the number of time steps considered for all patients is kept constant and this is achieved by sampling the patient's journey over a fixed number of points. $n$ and $d$ retain their meaning from earlier. \\
 
 A convolutional neural network is used to identify patterns in the patient-image, whose outputs are then fed into a fully-connected network. The architecture is elaborated in Table \ref{tab:arch2}.
 \begin{table}[H]
