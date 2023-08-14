@@ -2,6 +2,14 @@
 
 Repository to store all work done on M.Sc. Data Science dissertation. For the paper, go to https://github.com/sourasen1011/UoE_Research_Project_2023/blob/dev/presentations/my_thesis/01/thesis.pdf.
 
+### Step By Step Run(s)
+Once you have unzipped the contents, open up a terminal.
+Navigate to your current folder. Set up a virtual environment.
+~~~
+python -m venv my_virtual_env
+~~~
+
+
 #### ```preprocessing```
 
 The ```preprocessing``` directory contains two .py files for cleaning and ingesting the data from MIMIC-IV. This site goes into detail about the dataset - https://physionet.org/content/mimiciv/2.2/. This github repository talks about setting up the data locally - https://github.com/MIT-LCP/mimic-code/tree/main/mimic-iv.
