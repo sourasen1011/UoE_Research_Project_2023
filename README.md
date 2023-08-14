@@ -5,11 +5,17 @@ Repository to store all work done on M.Sc. Data Science dissertation. For the pa
 ### Step By Step Run(s)
 Once you have unzipped the contents, open up a terminal.
 Navigate to your current folder. Set up a virtual environment.
-```python -m venv my_virtual_env```
+```
+python -m venv my_virtual_env
+```
 Activate the environment.
-```my_virtual_env\Scripts\activate```
+```
+my_virtual_env\Scripts\activate
+```
 Install the dependencies from the requirements file.
-```pip install -r requirements.txt```
+```
+pip install -r requirements.txt
+```
 First, set up the data by running the preprocessing files.
 ```
 cd preprocessing
