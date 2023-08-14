@@ -5,10 +5,25 @@ Repository to store all work done on M.Sc. Data Science dissertation. For the pa
 ### Step By Step Run(s)
 Once you have unzipped the contents, open up a terminal.
 Navigate to your current folder. Set up a virtual environment.
-~~~
-python -m venv my_virtual_env
-~~~
+```python -m venv my_virtual_env```
+Activate the environment.
+```my_virtual_env\Scripts\activate```
+Install the dependencies from the requirements file.
+```pip install -r requirements.txt```
+First, set up the data by running the preprocessing files.
+```
+cd preprocessing
+python time_invariant_preprocessing.py
+python time_invariant_preprocessing.py
+```
+This will create a data folder storing all the required preprocessed files. Then you can independently run any of the ```.ipynb``` files in the ```examples``` directory. Make sure to use the same virtual environment to run these files.
 
+For experiments, you can run the following from the terminal.
+```
+cd ..\experiments
+python repeat_fits.py --iter 5 --verbose True
+```
+This will print out a dictionary of evaluation metrics to the terminal. Copy that into the ```experiment_fits.ipynb``` file to visualize them. Otherwise, the ```experiments.ipynb``` file has other independent experiments as well.S
 
 #### ```preprocessing```
 
