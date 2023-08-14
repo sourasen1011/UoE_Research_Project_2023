@@ -553,12 +553,12 @@ The following derivation is taken from \cite{kvamme_continuous_2019}. For notati
 &L_i = f(t_i)^{\delta_i}S(t_i)^{1-\delta_i}\\
 &= [h(t_i)S(\tau_{\kappa(t_i)-1})]^{d_i}][(1-h(t_i))S(\tau_{\kappa(t_i)-1})]^{1-d_i}\\
 &= h(t_i)^{d_i}[1 - h(t_i)]^{1-d_i}S(\tau_{\kappa(t_i)-1})]\\
-&= h(t_i)^{d_i}[1 - h(t_i)]^{1-d_i} \prod^{\kappa_{t_i-1}}_{j=1}[1 - h(\tau_j)] \numberthis  \label{eq:ll_contribution}
+&= h(t_i)^{d_i}[1 - h(t_i)]^{1-d_i} \prod^{\kappa(t_i)-1}_{j=1}[1 - h(\tau_j)] \numberthis  \label{eq:ll_contribution}
 \end{align*}
 For all the individuals, the combined log-likelihood is
 \begin{align*}
 L = \prod^{n}_{i=1}L_i = \prod^{n}_{i=1}\Bigg(h(t_i|x_i)^{d_i}[1 - h(t_i|x_i)]^{1-d_i} \\
-\prod^{\kappa_{t_i-1}}_{j=1}[1 - h(\tau_j|x_i)]\Bigg) \numberthis  \label{eq:ll}
+\prod^{\kappa(t_i)-1}_{j=1}[1 - h(\tau_j|x_i)]\Bigg) \numberthis  \label{eq:ll}
 \end{align*}
 From here, the loss function for a batch can be constructed as the negative log likelihood.
 \begin{align*}
@@ -568,10 +568,10 @@ log(L) = \sum^{n}_{i=1}\Bigg(d_i log[h(t_i|x_i)]+(1-d_i)log[1-h(t_i|x_i)]+\\
 To adjust for varying batch sizes, the mean negative log likelihood is taken as the loss.
 \begin{align*}
 \mathcal{L}_{nll} = -\frac{1}{n}\sum^{n}_{i=1}\Bigg(d_i log[h(t_i|x_i)]+(1-d_i)log[1-h(t_i|x_i)]+\\
-\sum^{j=1}_{\kappa(t_i)-1}log[1 - h(\tau_j|x_i)] \Bigg) \\
+\sum^{\kappa(t_i)-1}_{j=1} log[1 - h(\tau_j|x_i)] \Bigg) \\
 = \frac{1}{n}\sum^{n}_{i=1}\sum^{\kappa_{t_i}}_{j=1}(y_{ij}log[h(\tau_j|x_i)]+(1-y_{ij})log[1-h(\tau_j|x_i)]) \numberthis  \label{eq:nll}
 \end{align*}
-This can now be minimized by gradient-based methods, thus making it a useful loss function for a neural network to work with. Here, $y_{ij}$ is an indicator variable corresponding to 1 if and only if an event is experienced by the individual $i$ at time $t_j$. Hence, $y$ is a sparse matrix consisting of mostly 0 with 1 only present when the time $t_j$ represents an observed event $d_i = 1$ for individual $x_i$. \\
+This can now be minimized by gradient-based methods, thus making it a useful loss function for a neural network to work with. Here, $y_{ij}$ is an indicator variable corresponding to 1 if and only if an event is experienced by the individual $i$ at time $t_j$. Formally, $y_{ij} = \mathds{1}(t_i = \tau_j , d_i = 1)$. Hence, $y$ is a sparse matrix consisting of mostly 0 with 1 only present when the time $t_j$ represents an observed event $d_i = 1$ for individual $x_i$. \\
 
 The loss can be thought of as the negative log likelihood of Bernoulli data $\theta^p(1-\theta)^{1-p}$, where $\theta=h(\tau_j|x_i)$ and $p=y_{ij}$ \cite{bin_x_entropy_brown}, and can be computed using existing functions in the PyTorch library.\\
 
@@ -597,7 +597,7 @@ The negative of this lower-bound is chosen to be the loss function, which can th
 \section{\label{appdx2}Tools Used}
 
 \subsection{\label{app:mlp}Multi Layer Perceptron}
-The multi-layer perceptron, arose from the field of psychology \cite{mlp} formed the foundation of neural networks, although later implementation gradually tore away from the biological foundations and now bear only a slight similarity to the functioning of a human brain. For ordinary regression tasks, an input vector $\mathbf{x}$, weight vector $\mathbf{w}$ and bias vector $\mathbf{b}$,
+The multi-layer perceptron, arose from the field of psychology \cite{mlp} formed the foundation of neural networks, although later implementations gradually tore away from the biological foundations and now bear only a slight similarity to the functioning of a human brain. For ordinary regression tasks, an input vector $\mathbf{x}$, weight vector $\mathbf{w}$ and bias vector $\mathbf{b}$,
 \[
 \mathbf{x} = \begin{bmatrix}
 x_1 \\
@@ -632,7 +632,7 @@ z^{l}_{i} = \mathbf{w}^{T}_{i}\mathbf{a}^{l-1} + \mathbf{b}_i \label{eq:mlp_inac
 where $\mathbf{a}^{l}_{i}$ is the activated (having passed through the activation function) output from the $i^{th}$ neuron in the $l^{th}$ layer. This network is trained iteratively by backpropagating \cite{backprop} errors through the connections over multiple epochs until some reasonable notion of convergence is achieved.
 
 \subsection{\label{app:conv}Convolutional Neural Networks}
-CNNs are a type of regularized feed-forward network that learn via filter optimization. This type of network has roots in biological vision. The first application of backpropagation to CNNs was in \cite{cnn}. They are useful for preserving spatial arrangement within the data and enforcing local connectivity. CNNs have found success in field of image and audio processing and even time series forecasting. Because of the shared-weight architecture, CNNs require far less connections than an equivalent fully-connected network.
+CNNs are a type of regularized feed-forward network that learn via filter (kernel) optimization. This type of network has roots in biological vision. The first application of backpropagation to CNNs was in \cite{cnn}. They are useful for preserving spatial arrangement within the data and enforcing local connectivity. CNNs have found success in field of image and audio processing and even time series forecasting. Because of the shared-weight architecture, CNNs require far less connections than an equivalent fully-connected network.
 
 \subsection{\label{app:SHAP}SHAP}
 Explainability of results is sought through SHAP values. The concept of SHAP (SHapley Additive Explanations) comes from coalitional game theory and were recently incorporated into the field of machine learning \cite{shap_force_plot} \cite{shap}. The idea is to justly allocate credit to each member of a group (or coalition) for achieving a common goal. An easy example to think of might be to think of a group of friends running up a restaurant bill. At the end, it would be fair for them to split the bill according to what they individually ate. It can be seen that this quite naturally translates to the world of model building, where it is important to know what the contribution of each feature was to the final model output. SHAP provides this unified framework.\\
