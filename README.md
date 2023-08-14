@@ -2,6 +2,8 @@
 
 Repository to store all work done on M.Sc. Data Science dissertation. For the paper, go to https://github.com/sourasen1011/UoE_Research_Project_2023/blob/dev/presentations/my_thesis/01/thesis.pdf.
 
+The full data needs a DUA to be signed and a course to be completed, however, here is a demo of the data - https://physionet.org/content/mimic-iv-demo/2.2/
+
 ### Step By Step Run(s)
 Once you have unzipped the contents, open up a terminal.
 Navigate to your current folder. Set up a virtual environment.
