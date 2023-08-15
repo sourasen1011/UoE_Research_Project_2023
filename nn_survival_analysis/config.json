@@ -27,10 +27,10 @@
     "time_variant":{
         "training":{
             "q_cuts":15,
-            "hidden_size":64,
+            "hidden_size":24,
             "alpha":0.001,
             "batch_size":256,
-            "num_epochs":200,
+            "num_epochs":100,
             "learning_rate":0.001,
             "shuffle":true,
             "patience":20,

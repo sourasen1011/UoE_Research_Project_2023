@@ -49,7 +49,7 @@ class Time_Variant_Survival:
         fitter function
         verbose: print on or off
         '''
-        input_size = 7 * self.x_train_reshape_tv.shape[2] * self.x_train_reshape_tv.shape[3]
+        input_size = 4 * self.x_train_reshape_tv.shape[2] * self.x_train_reshape_tv.shape[3]
         
         # init loss
         l = generic_Loss()

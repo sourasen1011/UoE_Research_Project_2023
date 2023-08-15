@@ -24,8 +24,8 @@ class Net(nn.Module):
     def __init__(self , fc_input_size, hidden_size , output_size , dropout_rate):
         super(Net , self).__init__()
         self.conv_net = nn.Sequential(
-            nn.Conv2d(1, 14, kernel_size = 3 , stride = 1 , padding = 1) , nn.ReLU() , 
-            nn.Conv2d(14, 7, kernel_size = 3 , stride = 1 , padding = 1) , nn.ReLU() ,
+            nn.Conv2d(1, 8, kernel_size = 3 , stride = 1 , padding = 1) , nn.ReLU() , 
+            nn.Conv2d(8, 4, kernel_size = 3 , stride = 1 , padding = 1) , nn.ReLU() ,
             nn.Flatten()
         )
 
