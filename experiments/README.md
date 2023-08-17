@@ -4,7 +4,7 @@ The repeat_fits.py file essentially calls the ```nn_survival_analysis.run_fitter
 
 ```
 Set-ExecutionPolicy Unrestricted -Scope Process
-{project_env}\Scripts\activate
+{my_virtual_env}\Scripts\activate
 cd experiments
 python repeat_fits.py --iter 2 --verbose True
 ```
