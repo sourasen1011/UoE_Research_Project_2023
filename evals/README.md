@@ -3,4 +3,4 @@ This directory just contains two copies of code from https://github.com/havakv/p
 ```concordance.py -> concordance_copy.py```
 ```eval_surv.py -> eval_surv_copy.py```
 
-I needed to copy them because the evaluation offered by the original package was not working on my machine due to a packge version problem(?) with ```numba```. I just changed that part and now it works.
+I needed to copy them because the evaluation offered by the original package was not working on my machine due to a package version problem(?) with ```numba```. I just changed that part and now it works.
