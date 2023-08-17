@@ -64,10 +64,12 @@
 %\thanks{A footnote to the article title}%
 \author{Souradeep Sen \\
 	 \small Department of Computer Science, \\ 
-	 \small University of Exeter
+	 \small University of Exeter,\\
+	 \small Exeter, UK\\
+	 \small souradeepsen2711@gmail.com
 	}
 
-\date{July, 2023}% It is always \today, today,
+%\date{July, 2023}% It is always \today, today,
              %  but any date may be explicitly specified
 
 
@@ -100,7 +102,9 @@ The paper is organized as follows. Section 2 contains a brief review of related 
 \section{\label{rescon}Related Work}
 Deep learning methods in conjunction with classical machine learning, have recently started gaining traction in clinical settings - see \cite{e2edlgjoreski}, \cite{nirschl2018deep}, \cite{10.1001/jamanetworkopen.2019.6972}, \cite{asolares2020} and \cite{lorenzoni_2019}. They are starting to be adopted in the field of survival analysis as well. A deep neural network model with learned medical feature embedding is proposed in \cite{che2017} to address high dimensionality and temporality in electronic health record (EHR) data. Here, a convolutional neural network is used to capture non-linear longitudinal evolution of EHRs and local temporal dependency for risk prediction, and embed medical features to account for high dimensionality. Experiments show promising results in predicting risks for congestive heart failure.\\
 
-Personalized predictive modeling is investigated in \cite{suo2017personalized}, which aims to build specific models for individual patients using similar patient cohorts to capture their specific characteristics. According to this study, although CNNs have shown promise on measuring patient similarity, one disadvantage is that they could not utilize temporal and contextual information of EHRs. To measure patient similarity using EHRs, the authors proposed a time-fusion CNN framework. A vector representation was generated for each patient, which was then utilized in measuring patient similarity and personalized disease prediction. Dynamic updates to a CNN model are explored in \cite{brand2018real} as more data is gathered over time - this architecture lends itself well to real-time mortality risk prediction. Maintaining interpretability across deep learning models is explored in \cite{caicedo2019iseeu}.\\
+%Personalized predictive modeling is investigated in \cite{suo2017personalized}, which aims to build specific models for individual patients using similar patient cohorts to capture their specific characteristics. According to this study, although CNNs have shown promise on measuring patient similarity, one disadvantage is that they could not utilize temporal and contextual information of EHRs. To measure patient similarity using EHRs, the authors proposed a time-fusion CNN framework. A vector representation was generated for each patient, which was then utilized in measuring patient similarity and personalized disease prediction. Dynamic updates to a CNN model are explored in \cite{brand2018real} as more data is gathered over time - this architecture lends itself well to real-time mortality risk prediction. Maintaining interpretability across deep learning models is explored in \cite{caicedo2019iseeu}.\\
+
+The study by \cite{suo2017personalized} focuses on personalized predictive modeling. They aim to create patient-specific models by using similar patient cohorts to capture unique traits. While CNNs show promise in measuring patient similarity, they struggle with incorporating time-dependent and context cues from EHRs. The authors introduce a solution called time-fusion CNN, by generating patient vectors to gauge similarity and subsequently making personalized disease prediction. Authors in \cite{brand2018real} explore dynamically updating CNN models as new data accumulates for real-time mortality risk prediction. Meanwhile, Caicedo et al. (2019) investigate maintaining interpretability for deep learning models deployed in an ICU setting.\\
 
 Extensions to the classical Cox proportional hazards model were first proposed in \cite{faraggi_simons} and later in \cite{deepsurv}. More complex architectures like RNNs were applied to ingest time-varying patient data anad generate risk scores in \cite{rnn_surv}. Discrete time survival predictions were addressed in \cite{kvamme_tte}, \cite{nagpal_deep_2021} and \cite{deephit}. This study aims to consider incidences as time-to-event to enable  probabilistic risk prediction for mortality. The use of EHR such as those available in MIMIC-IV, allows access to comprehensive longitudinal data, which captures the entire cycle of a host of medical factors such as patients' diagnoses and treatments.
 
@@ -135,7 +139,7 @@ Accelerated failure time models (AFT) are a popular parametric alternative to th
 At the cost of higher fitting times, Random Survival Forest (RSF) models deliver high discriminative power with impressive calibration \cite{rsf}. Building on Breiman's approach in \cite{rf}, this method uses the log-rank test between survival cohorts to determine the best splits \footnote{RSF models have a selection bias towards covariates with many possible splits or missing values. Improvements towards mitigating this have been made in the form of Conditional Inference Forests which use more nuanced criteria to split nodes, via unbiased recursive partitioning \cite{cit}.}.
 
 \subsection{\label{setting}Data Setup}
-Before moving to the discrete setting, some formal notation for the data is introduced. The data is assumed to be right-censored (starting times for all subjects are known, but ending times are not). Hence, the data, $\mathcal{D}$ can be represented as a set of tuples $\{(x_i , t_i , d_i)\}_{i=1}^{N}$  \cite{nagpal_deep_2021}. Here, $x_i \in \mathbb{R}^d$ are covariates for patient $i$. $t_i$ is the time of an event or censoring such that $t_i = min(T_i, C_i)$, where $T_i$ and $C_i$ respectively denote the times of event and censoring. A subject is assumed to have either experienced an event or have been censored, but not both. $d_i$ is an indicator that signifies whether $t_i$ is event time or censoring time. $d=1$ for a subject that experiences the event (uncensored) while $d=0$ for a subject that is censored before experiencing the event. More formally, $d= \mathds{1}\{T_i \le C_i\}$. Later in the paper, experiments with time-variant covariates will necessitate the use of a null masking matrix, $\mathcal{M}$ \cite{deephit}.\\
+Before moving to the discrete setting, some formal notation for the data is introduced. The data is assumed to be right-censored (starting times for all subjects are known, but ending times are not). Hence, the data, $\mathcal{D}$ can be represented as a set of tuples $\{(x_i , t_i , d_i)\}_{i=1}^{N}$  \cite{nagpal_deep_2021}. Here, $x_i \in \mathbb{R}^d$ are covariates for patient $i$. $t_i$ is the time of an event or censoring such that $t_i = min(T_i, C_i)$, where $T_i$ and $C_i$ respectively denote the times of event and censoring. A subject is assumed to have either experienced an event or have been censored, but not both. $d_i$ is an indicator that signifies whether $t_i$ is event time or censoring time. $d=1$ for a subject that experiences the event (uncensored) while $d=0$ for a subject that is censored before experiencing the event. More formally, $d= \mathds{1}\{T_i \le C_i\}$. Later in the paper, experiments with time-variant covariates will necessitate the use of a null masking matrix, $\mathcal{M}$ \cite{deephit}.
 
 \subsection{\label{discrete}Discrete-Time Survival Analysis}
 For hazard and survival calculation in a discrete-time setting, the following formulation from \cite{kvamme_continuous_2019} is presented. Let $\mathbb{T} = \{\tau_1, \tau_2, \ldots\ \}$ denote the timestamps, i.e. the indices of the discrete times corresponding to different subjects in the data. The event timestamp is $T^*\in\mathbb{T}$. The definitions of PMF and survival function follow as
@@ -202,15 +206,14 @@ z^{l}_{i} = \mathbf{w}^{T}_{i}\mathbf{a}^{l-1} + \mathbf{b}_i \numberthis \label
 where $\mathbf{a}_i^{l}$ is the activated (having passed through the activation function) output from the $i^{th}$ neuron in the $l^{th}$ layer. With dropout, the feed forward operation is modified slightly.
 
 \begin{gather*}
-r^{l-1}_j \sim Bernoulli(p) \\
-\hat{\mathbf{a}}^{l-1} = r^{l-1} \times \mathbf{a}^{l-1} \\
+r^{l-1}_j \sim Bernoulli(1-p) \\
+\hat{\mathbf{a}}^{l-1} = r^{l-1} \times \mathbf{a}^{l-1}\numberthis \label{eq:dropout}\\
 z^{l}_{i} = \mathbf{w}^{T}_{i}\hat{\mathbf{a}}^{l-1} + \mathbf{b}_i \numberthis  \label{eq:mlp_inactivate} \\
 \hat{\mathbf{a}}^{l}_i = \sigma^{l}(z^{l}_{i})
 \end{gather*}
+It can be seen in \ref{eq:dropout} that units are dropped randomly according to a Bernoulli distribution with probability $p$, which is known as the dropout rate and is a tunable hyperparameter. Dropout is generally reserved for training. Libraries like PyTorch allow users to prime networks for training or evaluation.\\
 
-Dropout is generally reserved for training. Libraries like PyTorch allow users to prime networks for training or evaluation.\\
-
-When applied during the testing or prediction phase as well, a probability distribution of the output is created, allowing for probabilistic inference instead of point inference as present in regular neural networks. Over many iterations, this essentially means that the network used for prediction is slightly different each time, resulting in slightly different outputs - thereby allowing users to generate a probability distribution of outputs.\\
+When applied during the testing or prediction phase as well, a probability distribution of the output is created, allowing for probabilistic inference instead of point inference as present in regular neural networks. Over many iterations, this essentially means that the network used for prediction is slightly different each time, resulting in slightly different outputs - thereby allowing users to generate a probability distribution of outputs.
 
 \subsection{\label{sec:shap}SHAP}
 Being uncertainty-aware ties in with the idea of interpretability of modern deep learning methods, which is often a barrier towards the adoption of such methods into highly regulated industries such as finance or medicine. SHAP (SHapley Additive exPlanations) values \cite{shap}, extended from the field of cooperative game theory provide a unified, model-agnostic method to explain the contributions of covariates to a model's output. The idea is to estimate a model's output with a simple \textit{explanation} model. For simple models like linear regression, the model is it own explanation model. For complex models such as deep learning models, a separate explanation model needs to be made. \\
@@ -369,7 +372,9 @@ The  survival distributions were first examined with a non-parametric fitter, th
 
 Next, a range of parametric, semi-parametric, tree-based and neural network-based methods were applied to the data and their evaluation criteria noted. To establish confidence intervals on said criteria, fits were run multiple times - all time-invariant models apart from Cox Proportional Hazards model and Weibull Accelerated Failure Time model were run 10 times. Thus, distributions of their cindex and integrated Brier scores were generated. \\
 
-One of the earlier aims of this study was to see if hybrid deep learning, that is the supplementation of deep learning with classical machine learning techniques would yield better performance compared to traditional techniques. In that light, although methods such as clustering and PCA are introduced into the pipeline, the highest discriminatory power (comparable to traditional methods) is generally observed if the data is directly fed into the neural network(s). Due to this shortcoming, the time-variant version has not been equipped with any clustering utility as opposed to its time-invariant counterpart. Some tests were carried out to see the effect of having multiple clusters and preprocessing the data with PCA. Details are in Table \ref{tab:eval_degrad}. Ranges of hyperparameters were tested for both time-invariant and time-variant models - they are shown in Table \ref{tab:hyp_tun}. The details of experiments comparing the two architectures with other off-the-shelf methods are listed in Table \ref{tab:eval}.\\
+One of the earlier aims of this study was to see if hybrid deep learning, that is the supplementation of deep learning with classical machine learning techniques would yield better performance compared to traditional techniques. In that light, although methods such as clustering and PCA are introduced into the pipeline, the highest discriminatory power (comparable to traditional methods) is generally observed if the data is directly fed into the neural network(s). Due to this shortcoming, the time-variant version has not been equipped with any clustering utility as opposed to its time-invariant counterpart. Some tests were carried out to see the effect of having multiple clusters and preprocessing the data with PCA. Details are in Table \ref{tab:eval_degrad}. The details of experiments comparing the two architectures with other off-the-shelf methods are listed in Table \ref{tab:eval}.\\
+
+%Ranges of hyperparameters were tested for both time-invariant and time-variant models - they are shown in Table \ref{tab:hyp_tun}.
 
 \begin{table}[H]
   \centering
@@ -428,14 +433,14 @@ This implementation is equipped with a wrapper for the Python library \texttt{sh
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.5\textwidth]{comparing_surv_curve.pdf}
+  \includegraphics[width=0.4\textwidth]{comparing_surv_curve.pdf}
   \caption[Survival curve comparison]{Comparison of expected survival curve against baseline survival and empirical survival}
   \label{fig:comparing_surv_curve}
 \end{figure}
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.5\textwidth]{diff_exp_curve.pdf}
+  \includegraphics[width=0.4\textwidth]{diff_exp_curve.pdf}
   \caption[Survival difference]{An individual subject's survival curve differs from the expected survival curve}
   \label{fig:diff_exp_curve}
 \end{figure}
@@ -472,7 +477,7 @@ This implementation is equipped with a wrapper for the Python library \texttt{sh
   \label{tab:eval}
 \end{table*}
 
-Furthermore, this implementation generates confidence intervals by applying Monte-Carlo dropout. For any particular subject, the returned survival curve natively has confidence bands associated with it. They can be seen again in Figure \ref{fig:diff_exp_curve}.\\
+Furthermore, this implementation generates confidence intervals by applying Monte-Carlo dropout. For any particular subject, the returned survival curve natively has confidence bands associated with it. They can be seen again in Figure \ref{fig:diff_exp_curve}.
 
 %\begin{figure*}
 % \centering
@@ -484,30 +489,30 @@ Furthermore, this implementation generates confidence intervals by applying Mont
 %\section{\label{conc}Discussions}
 %The architecture is sacrificing calibration for discriminatory power. The Figures \ref{fig:cindex} and \ref{fig:ibs} showcase this situation.
 
-\begin{table}
- \centering
-  \begin{tabular}{|c|c|c|}
-  \hline
-  \textbf{Hyperparameter} & \textbf{Range - TIS} & \textbf{Range - TVS}\\
-  \hline
-  hidden\_size & -  & - \\
-  \hline
-  alpha & -  & - \\
-  \hline
-  batch\_size & -  & - \\
-  \hline
-  num\_epochs & -  & - \\
-  \hline
-  learning\_rate& -  & - \\
-  \hline
-  patience & -  & - \\
-  \hline
-  dropout & -  & - \\
-  \hline
-\end{tabular}
-\caption[Hyperparameter Tuning]{Ranges were tested for the above hyperparameters. The ones used in the final implementation are in \textbf{bold} font.}
-\label{tab:hyp_tun}
-\end{table}
+%\begin{table}
+% \centering
+%  \begin{tabular}{|c|c|c|}
+%  \hline
+%  \textbf{Hyperparameter} & \textbf{Range - TIS} & \textbf{Range - TVS}\\
+%  \hline
+%  hidden\_size & -  & - \\
+%  \hline
+%  alpha & -  & - \\
+%  \hline
+%  batch\_size & -  & - \\
+%  \hline
+%  num\_epochs & -  & - \\
+%  \hline
+% learning\_rate& -  & - \\
+%  \hline
+%  patience & -  & - \\
+%  \hline
+%  dropout & -  & - \\
+%  \hline
+%\end{tabular}
+%\caption[Hyperparameter Tuning]{Ranges were tested for the above hyperparameters. The ones used in the final implementation are in \textbf{bold} font.}
+%\label{tab:hyp_tun}
+%\end{table}
 
 \section{\label{morework}Further Work}
 Neural network methods capable of temporal learning (forms of RNN) can be applied to this problem to see if the discriminative power can be increased. This study has not applied several modern neural network optimizations like Nesterov momentum and learning rate scheduling - further work can focus on these aspects. \\
@@ -519,7 +524,7 @@ For evaluation criteria, another popular metric in the survival analysis literat
 \section{\label{conc}Conclusion}
 In conclusion, it is seen that the time-invariant version can be benchmarked by  semi-parametric and fully-parametric models, resulting in discriminatory power close to these traditional fitters. The time-variant model fares marginally better and can be benchmarked by the Random Survival Forests model. In both cases, comparable performance is achieved with the off-the-shelf models; however consistently\footnote{It must be noted that the performance for both RSF and TVS is quite volatile} outperforming these models may take further hyperparameter tuning and architecture changes. \\
 
-Both the time-invariant and time-varying architectures are sacrificing calibration for discriminatory power. Again, the Figures \ref{fig:cindex} and \ref{fig:ibs} show this. Depending on the situation, the metric to which more importance is given may change. Therefore, careful consideration needs to be taken before attempting to apply the method(s) proposed in this study. Another criterion to consider that often goes hand in hand with neural networks and large scale data is training time. Deep learning methodologies can compete with traditional methods, provided proper hyperparameter tuning and enough training time. That being said, it is often seen that training time (number of epochs) is often not linearly correlated with better performance (in terms of discriminatory power).\\
+Both the time-invariant and time-varying architectures are sacrificing calibration for discriminatory power. Again, the Figures \ref{fig:cindex} and \ref{fig:ibs} show this. Depending on the situation, the metric to which more importance is given may change. Therefore, careful consideration needs to be taken before attempting to apply the method(s) proposed in this study. Another criterion to consider that often goes hand in hand with neural networks and large scale data is training time. Deep learning methodologies can compete with traditional methods, provided proper hyperparameter tuning and enough training time. That being said, it is often seen that training time (number of epochs) is often not linearly correlated with better performance (in terms of discriminatory power).
 
 \section{\label{dec}Declarations}
 \textit{Declaration of Originality}: I am aware of and understand the University of Exeter’s policy on plagiarism and I certify that this assignment is my own work, except where indicated by referencing, and that I have followed the good academic practices.\\
@@ -762,5 +767,3 @@ For the experiments involving Time-Invariant or Time-Variant models, here are th
 %\end{multicols} % end multi cols layout
 
 \end{document}
-%
-% ****** End of file apssamp.tex ******
