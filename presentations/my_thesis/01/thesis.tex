@@ -190,12 +190,27 @@ where $\phi_j(x_i)$ is the output of the neural network at node $j$ correspondin
 Returning to the problem at hand, for such a parameterization, the continuous time scale $\mathbb{T}$ needs to be discretized into $m$ pieces. A simple way to do this is to equally divide up the set $\mathbb{T}$ into $m$ equal parts. The hazards across these $m$ timesteps can be cumulatively multiplied to find the survival function as seen in Eq. \ref{eq:cum_haz}. 
 
 \section{\label{UQ_explain}Uncertainty Quantification and Explainability}
-This implementation uses Monte-Carlo Dropout as a means of uncertainty quantification and SHAP to explain predictions.
+This implementation uses Monte-Carlo Dropout \cite{mcdropout} as a means of uncertainty quantification and SHAP to explain predictions.
 
 \subsection{\label{sec:dropout}MC Dropout}
-Dropout was originally introduced in 2014 \cite{dropout} as a method to regularize neural networks by randomly dropping units along with their connections. This prevents units from co-adapting too much, thereby forcing their neighbours to `learn' the signal in a more `robust' fashion. Dropout is generally reserved for training. Libraries like PyTorch allow users to prime networks for training or evaluation.\\
+Dropout was originally introduced in 2014 \cite{dropout} as a method to regularize neural networks by randomly dropping units along with their connections. This prevents units from co-adapting too much, thereby forcing their neighbours to `learn' the signal in a more `robust' fashion. Referring to the original paper, for a standard feed-forward neural network with $\mathds{L}$ layers, the output of the $i^{th}$ neuron in the $l^{th}$ layer, where $l \in \mathds{L}$
 
-This work introduces a layer of uncertainty quantification to the survival estimates via Monte-Carlo dropout \cite{mcdropout}. When applied during the testing or prediction phase as well, a probability distribution of the output is created, allowing for probabilistic inference instead of point inference as present in regular neural networks. Over many iterations, this essentially means that the network used for prediction is slightly different each time, resulting in slightly different outputs - thereby allowing users to generate a probability distribution of outputs.\\
+\begin{gather*}
+z^{l}_{i} = \mathbf{w}^{T}_{i}\mathbf{a}^{l-1} + \mathbf{b}_i \numberthis \label{eq:mlp_inactivate} \\
+\mathbf{a}^{l}_i = \sigma^{l}(z^{l}_{i})  \label{eq:mlp_activated}
+\end{gather*}
+where $\mathbf{a}_i^{l}$ is the activated (having passed through the activation function) output from the $i^{th}$ neuron in the $l^{th}$ layer. With dropout, the feed forward operation is modified slightly.
+
+\begin{gather*}
+r^{l-1}_j \sim Bernoulli(p) \\
+\hat{\mathbf{a}}^{l-1} = r^{l-1} \times \mathbf{a}^{l-1} \\
+z^{l}_{i} = \mathbf{w}^{T}_{i}\hat{\mathbf{a}}^{l-1} + \mathbf{b}_i \numberthis  \label{eq:mlp_inactivate} \\
+\hat{\mathbf{a}}^{l}_i = \sigma^{l}(z^{l}_{i})
+\end{gather*}
+
+Dropout is generally reserved for training. Libraries like PyTorch allow users to prime networks for training or evaluation.\\
+
+When applied during the testing or prediction phase as well, a probability distribution of the output is created, allowing for probabilistic inference instead of point inference as present in regular neural networks. Over many iterations, this essentially means that the network used for prediction is slightly different each time, resulting in slightly different outputs - thereby allowing users to generate a probability distribution of outputs.\\
 
 \subsection{\label{sec:shap}SHAP}
 Being uncertainty-aware ties in with the idea of interpretability of modern deep learning methods, which is often a barrier towards the adoption of such methods into highly regulated industries such as finance or medicine. SHAP (SHapley Additive exPlanations) values \cite{shap}, extended from the field of cooperative game theory provide a unified, model-agnostic method to explain the contributions of covariates to a model's output. The idea is to estimate a model's output with a simple \textit{explanation} model. For simple models like linear regression, the model is it own explanation model. For complex models such as deep learning models, a separate explanation model needs to be made. \\
@@ -208,11 +223,10 @@ g(z') = \phi_0 + \sum_{i=1}^{n}\phi_iz'_i \numberthis  \label{eq:add_attr_method
 
 where $z' \in \{0,1\}^n$, with $n$ being the number of simplified input features. For explaining deep learning models, DeepLIFT was proposed in \cite{deeplift}, with the idea to explain differences in output from some `background' (or reference) output in terms of the difference in input from the background input. A value $ C_{\Delta x_i \Delta t} $ is assigned to $\Delta x$ such that $\sum_{i=1}^{n}C_{\Delta x_i \Delta t} = \Delta t$. This is called the summation-to-delta property. Here, $t=f(x)$ is the model output. $\Delta t = f(x) - f(r)$ refers to the deviation from the reference output and $\Delta x = x - r$ is the deviation from the reference input. Taking $\phi_i = C_{\Delta x_i \Delta t}$ and $\phi_0 = f(r)$, this explanation model satisfies the conditions to be an additive feature attribution method \cite{shap}.\\
 
-Shapley values assign an importance to each feature representing the effect the inclusion of that feature has on the model. To compute this effect, models are trained with the feature included - $f_{S\cup \{i\}}$ and with the feature withheld - $f_S(x_S)$. Here $S$ refers to all possible subsets without the feature $i$, i.e. $S \subseteq F \ \{i\}$. The Shapley values are the weighted averages of all possible differences.
-
+Shapley values assign an importance to each feature representing the effect the inclusion of that feature has on the model. To compute this effect, models are trained with the feature included - $f_{S\cup \{i\}}$ and with the feature withheld - $f_S(x_S)$. Here $S$ refers to all possible subsets without the feature $i$, i.e. $S \subseteq F \backslash \{i\}$. The Shapley values are the weighted averages of all possible differences.
 
 \begin{gather*}
-\phi_i = \sum_{S \subseteq F \ \{i\}} \frac{|S|!(|F|-|S|-1)!}{|F|!} [f_{S\cup \{i\}}(x_{S\cup \{i\}}) - f_S(x_S)]\numberthis  \label{eq:shap} %\cite{shap}
+\phi_i = \sum_{S \subseteq F \backslash \{i\}} \frac{|S|!(|F|-|S|-1)!}{|F|!} [f_{S\cup \{i\}}(x_{S\cup \{i\}}) - f_S(x_S)]\numberthis  \label{eq:shap} %\cite{shap}
 \end{gather*}
 
 \section{\label{model_arch}Model Architecture}
@@ -390,7 +404,7 @@ One of the earlier aims of this study was to see if hybrid deep learning, that i
 
 %It is noted that although the upper bound for the time-invariant method is above that of the traditional statistical fitters (CPH and AFT), its mean is below theirs. \\
 
-The time-invariant model performs better than the other neural networks, however it cannot reach the discriminative power of tree-based or traditional fitters. The time-variant counterpart seems to perform on par with Random Survival Forest in terms of c-index (discriminative power), thus outperforming the traditional fitters. Both time-invariant and time-variant methods have quite a large Brier score (indicating poor calibration) in comparison to off-the-shelf methods. The Figures \ref{fig:cindex} and \ref{fig:ibs} showcase this situation.\\
+The time-invariant model performs better than the other neural networks, however it cannot reach the discriminative power of traditional or tree-based or traditional fitters. The time-variant counterpart seems to perform on par with Random Survival Forest in terms of c-index (discriminative power), thus outperforming the traditional fitters. Both time-invariant and time-variant methods have quite a large Brier score (indicating poor calibration) in comparison to off-the-shelf methods. The Figures \ref{fig:cindex} and \ref{fig:ibs} showcase this situation.\\
 
 
 \begin{figure*}
@@ -503,7 +517,7 @@ Deeper architectures may be applied to the problem, however, longer training tim
 For evaluation criteria, another popular metric in the survival analysis literature is cumulative dynamic AUC \cite{cum_dyn_auc}. Future iterations can focus on this metric along with the two others mentioned in this study to see if it yields a different assessment of the models' suitability. In future, if the clustering utility is investigated in more detail, one might find that some parts of the code break due to the random initialization of clusters sometimes producing cohorts whose duration indices do not match the number of requested discretizations. This is a bug and may warrant investigation. 
 
 \section{\label{conc}Conclusion}
-In conclusion, it is seen that the time-invariant version can be benchmarked by  semi-parametric and fully-parametric models, resulting in discriminatory power close to these traditional fitters. The time-variant model fares marginally better and can be benchmarked by the Random Survival Forests model. In both cases, comparable performance is achieved with the off-the-shelf models; however outperforming these models may take further hyperparameter tuning and architecture changes. \\
+In conclusion, it is seen that the time-invariant version can be benchmarked by  semi-parametric and fully-parametric models, resulting in discriminatory power close to these traditional fitters. The time-variant model fares marginally better and can be benchmarked by the Random Survival Forests model. In both cases, comparable performance is achieved with the off-the-shelf models; however consistently\footnote{It must be noted that the performance for both RSF and TVS is quite volatile} outperforming these models may take further hyperparameter tuning and architecture changes. \\
 
 Both the time-invariant and time-varying architectures are sacrificing calibration for discriminatory power. Again, the Figures \ref{fig:cindex} and \ref{fig:ibs} show this. Depending on the situation, the metric to which more importance is given may change. Therefore, careful consideration needs to be taken before attempting to apply the method(s) proposed in this study. Another criterion to consider that often goes hand in hand with neural networks and large scale data is training time. Deep learning methodologies can compete with traditional methods, provided proper hyperparameter tuning and enough training time. That being said, it is often seen that training time (number of epochs) is often not linearly correlated with better performance (in terms of discriminatory power).\\
 
@@ -669,12 +683,14 @@ could be used to estimate a target variable $\mathbf{y}$ as
 \[
 \mathbf{y} = \sigma(\mathbf{w}^T\mathbf{x}+\mathbf{b}) \numberthis  \label{eq:mlp}
 \]
-where $\sigma$ is the sigmoid function for logistic regression and just the identity for linear regression. Now, a perceptron without any hidden layers (as was the original) is effectively similar to ordinary regression. With the addition of hidden layers and non-linear activation functions, multi-layer perceptrons become much more powerful. For a network with $\mathbf{L}$ layers, the output of the $i^{th}$ neuron in the $l^{th}$ layer, where $l \in \mathbf{L}$ is given as
-\begin{gather}
-z^{l}_{i} = \mathbf{w}^{T}_{i}\mathbf{a}^{l-1} + \mathbf{b}_i \label{eq:mlp_inactivate} \\
-\mathbf{a}^{l}_i = \sigma^{l}(z^{l}_{i}) \label{eq:mlp_activated}
-\end{gather}
-where $\mathbf{a}^{l}_{i}$ is the activated (having passed through the activation function) output from the $i^{th}$ neuron in the $l^{th}$ layer. This network is trained iteratively by backpropagating \cite{backprop} errors through the connections over multiple epochs until some reasonable notion of convergence is achieved.
+where $\sigma$ is the sigmoid function for logistic regression and just the identity for linear regression. Now, a perceptron without any hidden layers (as was the original) is effectively similar to ordinary regression. With the addition of hidden layers and non-linear activation functions, multi-layer perceptrons become much more powerful. This network is trained iteratively by backpropagating \cite{backprop} errors through the connections over multiple epochs until some reasonable notion of convergence is achieved.
+
+%For a network with $\mathbf{L}$ layers, the output of the $i^{th}$ neuron in the $l^{th}$ layer, where $l \in \mathbf{L}$ is given as
+%\begin{gather}
+%z^{l}_{i} = \mathbf{w}^{T}_{i}\mathbf{a}^{l-1} + \mathbf{b}_i \label{eq:mlp_inactivate} \\
+%\mathbf{a}^{l}_i = \sigma^{l}(z^{l}_{i}) \label{eq:mlp_activated}
+%\end{gather}
+%where $\mathbf{a}^{l}_{i}$ is the activated (having passed through the activation function) output from the $i^{th}$ neuron in the $l^{th}$ layer. 
 
 \subsection{\label{app:conv}Convolutional Neural Networks}
 CNNs are a type of regularized feed-forward network that learn via filter (kernel) optimization. This type of network has roots in biological vision. The first application of backpropagation to CNNs was in \cite{cnn}. They are useful for preserving spatial arrangement within the data and enforcing local connectivity. CNNs have found success in field of image and audio processing and even time series forecasting. Because of the shared-weight architecture, CNNs require far less connections than an equivalent fully-connected network.
