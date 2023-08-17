@@ -45,24 +45,25 @@ class generic_Loss(torch.nn.Module):
 
         return loss
 
-    def _cindex_lower_bound(self , comp_mask, pred_times, times):
+    def _cindex_lower_bound(self , comp_mask, pred_, times):
         '''
         comp_mask - comparable mask (no need for times and events separately)
-        pred_times - predicted survival times / (or survival probabilities)
+        pred_ - predicted outputs from NN representing (survival probabilities) / or (predicted survival times)
         '''
         # Get order
         _, order = torch.sort(times)
         
         # Convert comp_mask and pred_times to PyTorch tensors - hen order accordingly
-        pred_times_tensor = pred_times[order]
-
+        pred_tensor = pred_[order]
+        
         # Lower Bound
-        lb = torch.sum(comp_mask * (1 + torch.log(torch.sigmoid(pred_times_tensor - pred_times_tensor.view(-1, 1))) / torch.log(torch.tensor(2)))) / torch.sum(comp_mask)
+        lb = torch.sum(comp_mask * (1 + torch.log(torch.sigmoid(pred_tensor - pred_tensor.view(-1, 1))) / torch.log(torch.tensor(2)))) / torch.sum(comp_mask)
             
         # Exact C index
-        cindex = torch.sum(comp_mask * (pred_times_tensor - pred_times_tensor.view(-1, 1)) > 0) / torch.sum(comp_mask)
+        cindex = torch.sum((comp_mask * (pred_tensor - pred_tensor.view(-1, 1))) > 0) / torch.sum(comp_mask)
+
         # print(lb , cindex)
-        assert lb <= cindex, 'not a lower bound'
+        assert lb <= cindex, f'lb={lb} not a lower bound for cindex={cindex}'
 
         # add gradient tracking
         lb = lb.clone().detach().requires_grad_(True)

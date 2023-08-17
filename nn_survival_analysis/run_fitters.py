@@ -93,33 +93,33 @@ def run_fitters(config_file_path , data_folder_path , verbose = True):
     eval_dict['tvs']['cindex'] = tvs_cindex
     eval_dict['tvs']['ibs'] = tvs_ibs
 
-    # #-----------------------------------------------------------------------------------------------
-    # # instantiate - PyCox
-    # pyc = PYC(configs = configs, train_data = x_train, test_data = x_test, val_data = x_val, num_durations = 10)
+    #-----------------------------------------------------------------------------------------------
+    # instantiate - PyCox
+    pyc = PYC(configs = configs, train_data = x_train, test_data = x_test, val_data = x_val, num_durations = 10)
 
-    # # fit
-    # pyc.fit()
+    # fit
+    pyc.fit()
 
-    # # eval
-    # pyc_cindex , pyc_ibs = pyc.eval()
+    # eval
+    pyc_cindex , pyc_ibs = pyc.eval()
         
-    # # populate corresponding values in eval dict
-    # eval_dict['pyc']['cindex'] = pyc_cindex
-    # eval_dict['pyc']['ibs'] = pyc_ibs
+    # populate corresponding values in eval dict
+    eval_dict['pyc']['cindex'] = pyc_cindex
+    eval_dict['pyc']['ibs'] = pyc_ibs
 
-    # #-----------------------------------------------------------------------------------------------
-    # # instantiate - Deep Survival Machines
-    # dsm = DSM(configs = configs, train_data = x_train, test_data = x_test, val_data = x_val, num_durations = 10)
+    #-----------------------------------------------------------------------------------------------
+    # instantiate - Deep Survival Machines
+    dsm = DSM(configs = configs, train_data = x_train, test_data = x_test, val_data = x_val, num_durations = 10)
 
-    # # fit
-    # dsm.fit()
+    # fit
+    dsm.fit()
 
-    # # eval
-    # dsm_cindex , dsm_ibs = dsm.eval()
+    # eval
+    dsm_cindex , dsm_ibs = dsm.eval()
        
-    # # populate corresponding values in eval dict
-    # eval_dict['dsm']['cindex'] = dsm_cindex
-    # eval_dict['dsm']['ibs'] = dsm_ibs
+    # populate corresponding values in eval dict
+    eval_dict['dsm']['cindex'] = dsm_cindex
+    eval_dict['dsm']['ibs'] = dsm_ibs
     
     #-----------------------------------------------------------------------------------------------
     # instantiate - Time Invariant Survival
@@ -139,44 +139,44 @@ def run_fitters(config_file_path , data_folder_path , verbose = True):
     eval_dict['tis']['cindex'] = tis_cindex
     eval_dict['tis']['ibs'] = tis_ibs
     
-    # # -----------------------------------------------------------------------------------------------
-    # # instantiate - CPH
-    # cph = CPH(configs = configs, train_data = x_train, test_data = x_test, val_data = x_val)
-
-    # # fit
-    # cph.fit()
-    # # eval
-    # cph_cindex , cph_ibs = cph.eval(fitter_is_rsf = False)
-        
-    # # populate corresponding values in eval dict
-    # eval_dict['cph']['cindex'] = cph_cindex
-    # eval_dict['cph']['ibs'] = cph_ibs
-
-    # #-----------------------------------------------------------------------------------------------
-    # # instantiate - AFT
-    # aft = AFT(configs = configs, train_data = x_train, test_data = x_test, val_data = x_val)
-
-    # # fit
-    # aft.fit()
-    # # eval
-    # aft_cindex , aft_ibs = aft.eval(fitter_is_rsf = False)
-        
-    # # populate corresponding values in eval dict
-    # eval_dict['aft']['cindex'] = aft_cindex
-    # eval_dict['aft']['ibs'] = aft_ibs
-
-    #-----------------------------------------------------------------------------------------------
-    # instantiate - RSF
-    rsf = RSF(configs = configs, train_data = x_train, test_data = x_test, val_data = x_val)
+    # -----------------------------------------------------------------------------------------------
+    # instantiate - CPH
+    cph = CPH(configs = configs, train_data = x_train, test_data = x_test, val_data = x_val)
 
     # fit
-    rsf.fit()
+    cph.fit()
     # eval
-    rsf_cindex , rsf_ibs = rsf.eval(fitter_is_rsf = True)
+    cph_cindex , cph_ibs = cph.eval(fitter_is_rsf = False)
         
     # populate corresponding values in eval dict
-    eval_dict['rsf']['cindex'] = rsf_cindex
-    eval_dict['rsf']['ibs'] = rsf_ibs
+    eval_dict['cph']['cindex'] = cph_cindex
+    eval_dict['cph']['ibs'] = cph_ibs
+
+    #-----------------------------------------------------------------------------------------------
+    # instantiate - AFT
+    aft = AFT(configs = configs, train_data = x_train, test_data = x_test, val_data = x_val)
+
+    # fit
+    aft.fit()
+    # eval
+    aft_cindex , aft_ibs = aft.eval(fitter_is_rsf = False)
+        
+    # populate corresponding values in eval dict
+    eval_dict['aft']['cindex'] = aft_cindex
+    eval_dict['aft']['ibs'] = aft_ibs
+
+    # #-----------------------------------------------------------------------------------------------
+    # # instantiate - RSF
+    # rsf = RSF(configs = configs, train_data = x_train, test_data = x_test, val_data = x_val)
+
+    # # fit
+    # rsf.fit()
+    # # eval
+    # rsf_cindex , rsf_ibs = rsf.eval(fitter_is_rsf = True)
+        
+    # # populate corresponding values in eval dict
+    # eval_dict['rsf']['cindex'] = rsf_cindex
+    # eval_dict['rsf']['ibs'] = rsf_ibs
     
     #-----------------------------------------------------------------------------------------------
 
