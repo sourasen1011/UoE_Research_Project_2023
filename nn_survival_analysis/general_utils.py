@@ -79,7 +79,7 @@ def plot_with_cf(bin_edges , mean_ , low_ , up_ , _from , _to = None , transpare
     plt.ylabel('Survival Probability')
     
     # Save the plot as an SVG file
-    plt.savefig('graph.pdf', format='pdf')
+    plt.savefig('surv_graph_w_cf.pdf', format='pdf')
 
     # plt.show();
 

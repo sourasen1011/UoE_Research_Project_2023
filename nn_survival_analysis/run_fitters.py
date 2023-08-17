@@ -14,34 +14,13 @@ def run_fitters(config_file_path , data_folder_path , verbose = True):
     '''
     # have a dictionary to store all the metrics
     eval_dict = {
-        'tvs':{
-            'cindex':0 , 
-            'ibs':0
-            },
-        'tis':{
-            'cindex':0 , 
-            'ibs':0
-            },
-        'cph':{
-            'cindex':0 , 
-            'ibs':0
-            },
-        'aft':{
-            'cindex':0 , 
-            'ibs':0
-            },
-        'rsf':{
-            'cindex':0 , 
-            'ibs':0
-            },
-        'pyc':{
-            'cindex':0 , 
-            'ibs':0
-            },
-        'dsm':{
-            'cindex':0 , 
-            'ibs':0
-            }
+        'tvs':{'cindex':0 ,'ibs':0},
+        'tis':{'cindex':0 ,'ibs':0},
+        'cph':{'cindex':0 ,'ibs':0},
+        'aft':{'cindex':0 ,'ibs':0},
+        'rsf':{'cindex':0 ,'ibs':0},
+        'pyc':{'cindex':0 ,'ibs':0},
+        'dsm':{'cindex':0 ,'ibs':0}
         }
     
     # Get configs
@@ -165,18 +144,18 @@ def run_fitters(config_file_path , data_folder_path , verbose = True):
     eval_dict['aft']['cindex'] = aft_cindex
     eval_dict['aft']['ibs'] = aft_ibs
 
-    # #-----------------------------------------------------------------------------------------------
-    # # instantiate - RSF
-    # rsf = RSF(configs = configs, train_data = x_train, test_data = x_test, val_data = x_val)
+    #-----------------------------------------------------------------------------------------------
+    # instantiate - RSF
+    rsf = RSF(configs = configs, train_data = x_train, test_data = x_test, val_data = x_val)
 
-    # # fit
-    # rsf.fit()
-    # # eval
-    # rsf_cindex , rsf_ibs = rsf.eval(fitter_is_rsf = True)
+    # fit
+    rsf.fit()
+    # eval
+    rsf_cindex , rsf_ibs = rsf.eval(fitter_is_rsf = True)
         
-    # # populate corresponding values in eval dict
-    # eval_dict['rsf']['cindex'] = rsf_cindex
-    # eval_dict['rsf']['ibs'] = rsf_ibs
+    # populate corresponding values in eval dict
+    eval_dict['rsf']['cindex'] = rsf_cindex
+    eval_dict['rsf']['ibs'] = rsf_ibs
     
     #-----------------------------------------------------------------------------------------------
 
