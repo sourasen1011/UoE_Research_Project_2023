@@ -24,7 +24,7 @@ cd preprocessing
 python time_invariant_preprocessing.py
 python time_invariant_preprocessing.py
 ```
-This will create a data folder storing all the required preprocessed files. Then you can independently run any of the ```.ipynb``` files in the ```examples``` directory. Make sure to use the same virtual environment to run these files.
+This will create a ```data``` folder storing all the required preprocessed files. Then you can independently run any of the ```.ipynb``` files in the ```examples``` directory. Make sure to use the same virtual environment to run these files.
 
 For experiments, you can run the following from the terminal.
 ```
