@@ -30,9 +30,9 @@ from torch.utils.data import Dataset, DataLoader
 # np.random.seed(123)
 # random_state = 123
 
-# Add the outer directory
-sys.path.append('../')
-from eval_surv_copy import EvalSurv
+# Add the evals outer directory
+sys.path.append('../evals')
+from evals.eval_surv_copy import EvalSurv
 
 #_______________________________________________________________________________________________
 # Reusable Functions
@@ -79,7 +79,7 @@ def plot_with_cf(bin_edges , mean_ , low_ , up_ , _from , _to = None , transpare
     plt.ylabel('Survival Probability')
     
     # Save the plot as an SVG file
-    plt.savefig('graph.pdf', format='pdf')
+    plt.savefig('surv_graph_w_cf.pdf', format='pdf')
 
     # plt.show();
 

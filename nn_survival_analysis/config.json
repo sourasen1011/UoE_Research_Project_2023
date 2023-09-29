@@ -3,10 +3,10 @@
         "training":{
             "clusters":1,
             "q_cuts":15,
-            "hidden_size":64,
-            "alpha":0.001,
+            "hidden_size":25,
+            "alpha":0.01,
             "batch_size":256,
-            "num_epochs":600,
+            "num_epochs":400,
             "learning_rate":0.001,
             "shuffle":true,
             "patience":20,
@@ -24,13 +24,13 @@
             "time_grid_div":100
         }  
     },
-    "time_variant":{
+     "time_variant":{
         "training":{
             "q_cuts":15,
-            "hidden_size":64,
-            "alpha":0.001,
+            "hidden_size":25,
+            "alpha":0.01,
             "batch_size":256,
-            "num_epochs":200,
+            "num_epochs":100,
             "learning_rate":0.001,
             "shuffle":true,
             "patience":20,

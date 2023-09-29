@@ -14,34 +14,13 @@ def run_fitters(config_file_path , data_folder_path , verbose = True):
     '''
     # have a dictionary to store all the metrics
     eval_dict = {
-        'tvs':{
-            'cindex':0 , 
-            'ibs':0
-            },
-        'tis':{
-            'cindex':0 , 
-            'ibs':0
-            },
-        'cph':{
-            'cindex':0 , 
-            'ibs':0
-            },
-        'aft':{
-            'cindex':0 , 
-            'ibs':0
-            },
-        'rsf':{
-            'cindex':0 , 
-            'ibs':0
-            },
-        'pyc':{
-            'cindex':0 , 
-            'ibs':0
-            },
-        'dsm':{
-            'cindex':0 , 
-            'ibs':0
-            }
+        'tvs':{'cindex':0 ,'ibs':0},
+        'tis':{'cindex':0 ,'ibs':0},
+        'cph':{'cindex':0 ,'ibs':0},
+        'aft':{'cindex':0 ,'ibs':0},
+        'rsf':{'cindex':0 ,'ibs':0},
+        'pyc':{'cindex':0 ,'ibs':0},
+        'dsm':{'cindex':0 ,'ibs':0}
         }
     
     # Get configs

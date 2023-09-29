@@ -256,3 +256,9 @@ class Time_Variant_Survival:
         # print(f'integrated brier score {ibs}')
         
         return tdci , ibs
+    
+    def explain_with_shap(self , cluster:int = 0 , background_size:int = 500 , explained_size:int = 100) -> None:
+        raise NotImplementedError('not implemented yet :(')
+    
+    def plot_explain(self , plot_type:str , cluster:int = 0 , t_s:int = 0 , pat_num:int = 0)->None:
+        raise NotImplementedError('not implemented yet :(')

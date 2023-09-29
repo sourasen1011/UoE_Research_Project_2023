@@ -19,6 +19,7 @@ class Time_Invariant_Survival:
         self.train_data = train_data
         self.test_data = test_data
         self.val_data = val_data
+        self.shap_utils = None
 
         # state vars
         self.clustered = False
